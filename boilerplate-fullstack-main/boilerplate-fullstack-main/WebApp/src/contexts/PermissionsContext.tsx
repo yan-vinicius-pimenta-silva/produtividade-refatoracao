@@ -34,7 +34,8 @@ export function PermissionsProvider({ children }: { children: ReactNode }) {
       const systemResources = await fetchSystemResourcesForSelect();
 
       const map = systemResources.reduce((acc, resource) => {
-        acc[resource.name.toUpperCase()] = resource.name as ValidPermission;
+        const key = resource.name.toUpperCase().replace(/-/g, '_');
+        acc[key] = resource.name as ValidPermission;
         return acc;
       }, {} as Record<string, ValidPermission>);
 

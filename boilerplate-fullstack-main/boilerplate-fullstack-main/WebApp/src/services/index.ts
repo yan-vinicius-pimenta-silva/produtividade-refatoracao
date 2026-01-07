@@ -26,3 +26,18 @@ export {
 } from './usersServices/listUsers';
 export { updateUser } from './usersServices/updateUser';
 export { deleteUser } from './usersServices/deleteUser';
+
+export {
+  listCompanies,
+  createCompany,
+  listActivityTypes,
+  createActivityType,
+  listActivities,
+  createActivity,
+  listUfespRates,
+  createUfespRate,
+  listFiscalActivities,
+  createFiscalActivity,
+  listServiceOrders,
+  createServiceOrder,
+} from './productivityServices';

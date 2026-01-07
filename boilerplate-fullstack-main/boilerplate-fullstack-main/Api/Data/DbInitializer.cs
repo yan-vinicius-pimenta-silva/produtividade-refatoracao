@@ -44,24 +44,43 @@ namespace Api.Data
 
         public static async Task SeedSystemResourcesAsync(ApiDbContext context)
         {
-            if (await context.SystemResources.AnyAsync())
-                return;
-
             var resources = new List<SystemResource>
             {
                 new SystemResource { Name = "root", ExhibitionName = "Administrador" },
                 new SystemResource { Name = "users", ExhibitionName = "Gerenciamento de Usuários" },
                 new SystemResource { Name = "resources", ExhibitionName = "Recursos do Sistema" },
                 new SystemResource { Name = "reports", ExhibitionName = "Auditoria do Sistema" },
+                new SystemResource { Name = "companies", ExhibitionName = "Empresas" },
+                new SystemResource { Name = "activity-types", ExhibitionName = "Tipos de Atividade" },
+                new SystemResource { Name = "activities", ExhibitionName = "Atividades" },
+                new SystemResource { Name = "ufesp-rates", ExhibitionName = "Tabela UFESP" },
+                new SystemResource { Name = "fiscal-activities", ExhibitionName = "Atividades Fiscais" },
+                new SystemResource { Name = "service-orders", ExhibitionName = "Ordens de Serviço" },
             };
 
-            foreach (var resource in resources)
+            var existing = await context.SystemResources
+                .Select(r => r.Name)
+                .ToListAsync();
+
+            var now = DateTime.UtcNow;
+            var newResources = resources
+                .Where(resource => !existing.Contains(resource.Name))
+                .Select(resource => new SystemResource
+                {
+                    Name = resource.Name,
+                    ExhibitionName = resource.ExhibitionName,
+                    CreatedAt = now,
+                    UpdatedAt = now
+                })
+                .ToList();
+
+            if (newResources.Count == 0)
             {
-                resource.CreatedAt = DateTime.UtcNow;
-                resource.UpdatedAt = DateTime.UtcNow;
+                Console.WriteLine("System resources já estão atualizados.");
+                return;
             }
 
-            await context.SystemResources.AddRangeAsync(resources);
+            await context.SystemResources.AddRangeAsync(newResources);
             await context.SaveChangesAsync();
 
             Console.WriteLine("Seed de system resources executada.");

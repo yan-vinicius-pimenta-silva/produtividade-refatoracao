@@ -9,4 +9,10 @@ public static class EnvLoader
             throw new InvalidOperationException($"Variável de ambiente '{key}' não configurada.");
         return value;
     }
+
+    public static string GetEnv(string key, string defaultValue)
+    {
+        var value = Environment.GetEnvironmentVariable(key);
+        return string.IsNullOrWhiteSpace(value) ? defaultValue : value;
+    }
 }

@@ -13,11 +13,8 @@ Env.Load();
 var logger = Logger.LogToConsole("Startup");
 
 // --- Variáveis da connection string ---
-var dbHost = EnvLoader.GetEnv("DB_HOST");
-var dbPort = EnvLoader.GetEnv("DB_PORT");
-var dbUser = EnvLoader.GetEnv("DB_USER");
-var dbPassword = EnvLoader.GetEnv("DB_PASSWORD");
-var dbName = EnvLoader.GetEnv("DB_NAME");
+var dbProvider = EnvLoader.GetEnv("DB_PROVIDER", "postgres");
+var sqliteDbPath = EnvLoader.GetEnv("SQLITE_DB_PATH", "Data/app.db");
 
 // --- Configurar Kestrel ---
 var builder = WebApplication.CreateBuilder(args);
@@ -29,9 +26,24 @@ builder.WebHost.ConfigureKestrel(options =>
 });
 
 // --- Configurar DbContext ---
-var connectionString =
-    $"Host={dbHost};Port={dbPort};Username={dbUser};Password={dbPassword};Database={dbName}";
-builder.Services.AddDbContext<ApiDbContext>(options => options.UseNpgsql(connectionString));
+if (string.Equals(dbProvider, "sqlite", StringComparison.OrdinalIgnoreCase))
+{
+    var sqliteConnectionString = $"Data Source={sqliteDbPath}";
+    builder.Services.AddDbContext<ApiDbContext>(options => options.UseSqlite(sqliteConnectionString));
+    logger.LogInformation("DbProvider=SQLite ({path})", sqliteDbPath);
+}
+else
+{
+    var dbHost = EnvLoader.GetEnv("DB_HOST");
+    var dbPort = EnvLoader.GetEnv("DB_PORT");
+    var dbUser = EnvLoader.GetEnv("DB_USER");
+    var dbPassword = EnvLoader.GetEnv("DB_PASSWORD");
+    var dbName = EnvLoader.GetEnv("DB_NAME");
+    var connectionString =
+        $"Host={dbHost};Port={dbPort};Username={dbUser};Password={dbPassword};Database={dbName}";
+    builder.Services.AddDbContext<ApiDbContext>(options => options.UseNpgsql(connectionString));
+    logger.LogInformation("DbProvider=PostgreSQL ({host}:{port}/{db})", dbHost, dbPort, dbName);
+}
 
 // --- Configurar Resend ---
 var resendApiKey = EnvLoader.GetEnv("RESEND_API_KEY");
