@@ -1,0 +1,22 @@
+{
+	"description": "Sistema de produtividade fiscal",
+	"name": "dtisistemas/produtividade",
+	"type": "project",
+	"homepage": "https://produtividade.dti.sp.gov.br",
+	"license": "MIT",
+	"require": {
+		"php": ">=5.3.7",
+		"mpdf/mpdf": "^8.0",
+		"firebase/php-jwt": "^6.10"
+	},
+	"suggest": {
+		"paragonie/random_compat": "Provides better randomness in PHP 5.x"
+	},
+	"require-dev": {
+		"mikey179/vfsstream": "1.1.*",
+		"phpunit/phpunit": "4.* || 5.*"
+	},
+	"config": {
+		"vendor-dir": "application/third_party"
+	}
+}

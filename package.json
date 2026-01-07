@@ -1,0 +1,12 @@
+{
+  "name": "produtividade-pma",
+  "version": "1.0.0",
+  "title": "PRODUTIVIDADE PMA",
+  "homepage": "",
+  "devDependencies": {
+    "grunt": "^1.0.4",
+    "grunt-contrib-concat": "^1.0.1",
+    "grunt-contrib-less": "^1.4.1",
+    "grunt-contrib-uglify": "^2.3.0"
+  }
+}
