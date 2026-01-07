@@ -1,14 +1,17 @@
-# Admin Pannel BoilerPlate Backend - PostgreSQL + .NET
+# Admin Pannel BoilerPlate Backend - PostgreSQL / SQLite + .NET
 
 > Api com fluxo completo de autenticação **JWT**, implementado em **PostgreSQL + .NET**.  
 > Inclui **hash seguro de senhas (BCrypt)**, **emissão e validação de tokens JWT**, **controle customizável de permissões de acesso**,
 > **logs de sistema integrados** e um **repositório genérico** que permite criar CRUDs rapidamente apenas injetando DTOs específicos.
+>
+> Para testes locais, a API também suporta **SQLite** via variável de ambiente.
 
 ---
 
 ## Tecnologias Utilizadas
 
 - [**PostgreSQL**](https://www.postgresql.org/): Banco de dados relacional open source, robusto e altamente extensível, com suporte completo ao padrão SQL.
+- [**SQLite**](https://www.sqlite.org/index.html): Banco de dados leve, ideal para testes locais e validação rápida.
 - [**.NET 8**](https://learn.microsoft.com/en-us/dotnet/core/introduction): Framework moderno, multiplataforma e de código aberto para criação de APIs, aplicações web e serviços.
 - [**Entity Framework Core**](https://learn.microsoft.com/en-us/ef/core/): ORM oficial do .NET que simplifica o acesso a bancos de dados relacionais por meio de mapeamento objeto-relacional.
 - [**BCrypt**](https://www.nuget.org/packages/BCrypt.Net-Next/): Biblioteca utilizada para hash e verificação de senhas com o algoritmo bcrypt, garantindo maior segurança no armazenamento de credenciais.
@@ -111,6 +114,29 @@ dotnet run
 
 ---
 
+## Rodando com SQLite (modo teste/local)
+
+1. **Configure o `.env`**
+
+```ini
+DB_PROVIDER=sqlite
+SQLITE_DB_PATH=Data/app.db
+```
+
+2. **Aplicar migrations**
+
+```bash
+dotnet ef database update
+```
+
+3. **Rodar a API**
+
+```bash
+dotnet run
+```
+
+---
+
 ### Observações
 
 - As variáveis de ambiente são obrigatórias; se alguma não estiver configurada, a aplicação lançará uma exceção ao iniciar.
@@ -198,6 +224,19 @@ A Api inclui um **sistema completo de autenticação JWT**, composto pelos helpe
 | `GET`    | `/api/users/options`                | Retorna lista resumida (`UserLogReadDto[]`) para selects de relatórios |
 | `POST`   | `/api/users`                        | Cria um novo usuário                                                   |
 | `PUT`    | `/api/users/{id}`                   | Atualiza um usuário existente                                          |
+
+---
+
+## 📌 Endpoints de Produtividade
+
+| Recurso | Base URL | Descrição |
+| --- | --- | --- |
+| Empresas | `/api/companies` | CRUD básico de empresas |
+| Tipos de Atividade | `/api/activity-types` | CRUD de tipos (UFESP/PONTUAÇÃO/DEDUÇÃO) |
+| Atividades | `/api/activities` | CRUD de catálogo de atividades |
+| UFESP | `/api/ufesp-rates` | CRUD da tabela UFESP |
+| Atividades Fiscais | `/api/fiscal-activities` | Lançamentos com cálculo de pontuação |
+| Ordens de Serviço | `/api/service-orders` | CRUD básico de OS |
 | `DELETE` | `/api/users/{id}`                   | Remove um usuário                                                      |
 
 ---

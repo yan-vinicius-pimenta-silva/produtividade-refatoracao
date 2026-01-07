@@ -1,9 +1,35 @@
 # Admin Panel BoilerPlate
 
-> Modelo de painel administrativo full-stack com **backend em .NET 8 + PostgreSQL** e
-> **frontend em React + Vite + TypeScript**, incluindo **autenticação JWT**, **CRUD de usuários**,
-> **CRUD de recursos do sistema**, **controle de permissões RBAC**, **proteção de rotas** e
-> **auditoria de sistema** com integração completa entre frontend e backend.
+> Boilerplate full‑stack com **backend em .NET 8** e **frontend em React + Vite + TypeScript**,
+> incluindo **autenticação JWT**, **RBAC**, **auditoria**, além de uma estrutura pronta para
+> acomodar a **migração do legado CodeIgniter 3 (PHP)** do sistema de produtividade.
+
+---
+
+## Contexto da Migração (CodeIgniter 3 → React + .NET)
+
+Este repositório agora é a **base do novo sistema**. A migração segue os princípios abaixo:
+
+1. **Separação clara de responsabilidades** (React para UI, .NET para API e domínio).
+2. **Segurança por padrão** (JWT, validação de entrada, proteção contra SQL injection e XSS).
+3. **Compatibilidade com o legado**, preservando regras de negócio e nomenclaturas essenciais.
+4. **Iteratividade incremental**, permitindo coexistência temporária com o sistema antigo.
+
+### Principais domínios a serem migrados
+
+| Domínio legado | Responsabilidade | Camada no novo stack |
+| --- | --- | --- |
+| Atividades | Cadastro, validação e pontuação | API (Serviços + EF Core) |
+| Pontuação / UFESP | Cálculo mensal de produtividade | API (Service + Background Job) |
+| Ordem de Serviço | Fluxo de solicitação e resposta | API + WebApp |
+| Usuários / Permissões | RBAC + login intranet | API (Auth) + WebApp |
+| Anexos | Upload e armazenamento de arquivos | API (Storage) + WebApp |
+
+### Mapeamento MVC (Legado → Novo)
+
+- **Controllers (CI3)** → **Controllers/Services (.NET)**
+- **Models (CI3)** → **Models + Repositories + Services**
+- **Views (CI3)** → **Pages/Components (React)**
 
 ---
 
@@ -14,6 +40,7 @@
   - [.NET 8](https://learn.microsoft.com/en-us/dotnet/core/introduction)
   - [Entity Framework Core](https://learn.microsoft.com/en-us/ef/core/)
   - [PostgreSQL](https://www.postgresql.org/)
+  - [SQLite](https://www.sqlite.org/index.html) (modo teste/local)
   - [BCrypt](https://www.nuget.org/packages/BCrypt.Net-Next/)
   - [JWT (JSON Web Token)](https://jwt.io/introduction)
   - [Swagger](https://swagger.io/docs/)
@@ -81,7 +108,7 @@ admin-panel-boilerplate/
 
 ---
 
-## Rodando o Projeto via Docker Compose
+## Rodando o Projeto via Docker Compose (PostgreSQL)
 
 ### 1. Clonar o repositório
 
@@ -151,6 +178,38 @@ npm run dev
 
 ---
 
+## Rodando em Modo Teste com SQLite
+
+> Útil para testes rápidos e ambientes locais onde o PostgreSQL não é necessário.
+
+1. **Configure o `.env` da API**
+
+```bash
+cd Api
+cp .env.example .env
+```
+
+2. **Edite o `.env` e habilite SQLite**
+
+```ini
+DB_PROVIDER=sqlite
+SQLITE_DB_PATH=Data/app.db
+```
+
+3. **Aplicar migrations**
+
+```bash
+dotnet ef database update
+```
+
+4. **Iniciar a API**
+
+```bash
+dotnet run
+```
+
+---
+
 ## Documentação detalhada
 
 > Você pode encontrar informações mais completas sobre a aplicação acessando a documentação específica:
@@ -164,6 +223,78 @@ npm run dev
 
 - Todas as variáveis de ambiente são obrigatórias.
 - Logs de inicialização da api indicam se a conexão com o banco foi bem-sucedida.
+
+---
+
+## Diretrizes para Migração do Legado
+
+### 1. Base de dados
+
+**Mapeamento inicial sugerido** (legado → novo):
+
+| Legado | Novo (Model) | Observação |
+| --- | --- | --- |
+| `usuarios` | `User` | Já coberto pelo boilerplate, adaptar atributos adicionais |
+| `empresa` | `Company` | Nova entidade |
+| `atividade` | `Activity` | Nova entidade |
+| `tipo_atividade` | `ActivityType` | Enum + tabela |
+| `atividade_fiscal` | `FiscalActivity` | Nova entidade |
+| `ordem_servico` | `ServiceOrder` | Nova entidade |
+| `historico_ordem_servico` | `ServiceOrderHistory` | Nova entidade |
+| `unidade_fiscal` | `UfespRate` | Nova entidade |
+| `total_ponto_fiscal` | `FiscalScoreTotal` | Nova entidade |
+
+> **Dica:** implemente as entidades no diretório `Api/Models` e suas configurações
+> em `Api/Data/Configurations`.
+
+### 2. Serviços essenciais
+
+Priorize a migração destes serviços para preservar o core do sistema:
+
+1. **Autenticação + autorização**
+2. **Cadastro/Lançamento de atividades**
+3. **Cálculo de pontuação (UFESP, pontuação, dedução)**
+4. **Fluxo de Ordem de Serviço**
+5. **Upload de anexos**
+
+### 3. Frontend
+
+Crie as páginas no `WebApp/src/pages` seguindo o fluxo:
+
+1. Dashboard
+2. Cadastro de atividades
+3. Pontuação / Relatórios
+4. Ordens de serviço
+
+> Utilize `WebApp/src/api` para centralizar as chamadas HTTP.
+
+---
+
+## Módulos de Produtividade (Implementação Inicial)
+
+### API (.NET)
+
+| Recurso | Endpoint Base | Observações |
+| --- | --- | --- |
+| Empresas | `/api/companies` | Cadastro e consulta |
+| Tipos de Atividade | `/api/activity-types` | UFESP / PONTUAÇÃO / DEDUÇÃO |
+| Atividades | `/api/activities` | Cadastro das atividades do catálogo |
+| UFESP | `/api/ufesp-rates` | Tabela anual de UFESP |
+| Atividades Fiscais | `/api/fiscal-activities` | Lançamentos com cálculo de pontos |
+| Ordens de Serviço | `/api/service-orders` | Fluxo básico de OS |
+
+### WebApp (React)
+
+Rotas disponíveis:
+
+| Página | Rota |
+| --- | --- |
+| Empresas | `/companies` |
+| Tipos de Atividade | `/activity-types` |
+| Atividades | `/activities` |
+| UFESP | `/ufesp-rates` |
+| Atividades Fiscais | `/fiscal-activities` |
+| Ordens de Serviço | `/service-orders` |
 
 ---
 
