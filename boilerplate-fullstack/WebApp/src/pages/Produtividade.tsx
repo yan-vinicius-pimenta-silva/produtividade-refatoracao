@@ -1,367 +1,265 @@
 import { useState } from 'react';
 import {
-  Alert,
   Box,
   Button,
-  Divider,
-  Grid,
   Paper,
-  Stack,
+  Tab,
+  Tabs,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
   TextField,
   Typography,
 } from '@mui/material';
 import {
-  createFiscalActivity,
-  fetchProdutividadePoints,
-  produtividadeLogin,
-} from '../services/produtividadeServices';
-import type { ProdutividadePointsSummary } from '../interfaces';
-
-const defaultPeriod = new Date().toISOString().slice(0, 7);
+  CheckCircleOutline,
+  FilterList,
+  Refresh,
+  TaskAlt,
+} from '@mui/icons-material';
 
 export default function Produtividade() {
-  const [token, setToken] = useState('');
-  const [loginOverride, setLoginOverride] = useState('');
-  const [auth, setAuth] = useState<{ token: string; userId: number } | null>(
-    null
-  );
-  const [period, setPeriod] = useState(defaultPeriod);
-  const [points, setPoints] = useState<ProdutividadePointsSummary | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState(0);
 
-  const [activityForm, setActivityForm] = useState({
-    activityId: '',
-    fiscalId: '',
-    companyId: '',
-    completedAt: new Date().toISOString().slice(0, 10),
-    document: '',
-    protocol: '',
-    cpfCnpj: '',
-    rc: '',
-    value: '',
-    quantity: '',
-    notes: '',
-  });
-
-  async function handleLogin() {
-    try {
-      const response = await produtividadeLogin({
-        token: token || undefined,
-        login: loginOverride || undefined,
-      });
-      setAuth({ token: response.token, userId: response.user.id });
-      setMessage(`Bem-vindo, ${response.user.name}.`);
-    } catch (error) {
-      setMessage((error as Error).message);
-    }
-  }
-
-  async function handleFetchPoints() {
-    if (!auth) {
-      setMessage('Realize o login antes de consultar a pontuação.');
-      return;
-    }
-    try {
-      const summary = await fetchProdutividadePoints(
-        auth.userId,
-        period,
-        auth.token
-      );
-      setPoints(summary);
-      setMessage(null);
-    } catch (error) {
-      setMessage((error as Error).message);
-    }
-  }
-
-  async function handleActivitySubmit() {
-    if (!auth) {
-      setMessage('Realize o login antes de lançar atividades.');
-      return;
-    }
-
-    const payload = {
-      activityId: Number(activityForm.activityId),
-      fiscalId: Number(activityForm.fiscalId),
-      companyId: Number(activityForm.companyId),
-      completedAt: activityForm.completedAt,
-      document: activityForm.document || null,
-      protocol: activityForm.protocol || null,
-      cpfCnpj: activityForm.cpfCnpj || null,
-      rc: activityForm.rc || null,
-      value: activityForm.value ? Number(activityForm.value) : null,
-      quantity: activityForm.quantity ? Number(activityForm.quantity) : null,
-      notes: activityForm.notes || null,
-      attachments: [],
-    };
-
-    try {
-      await createFiscalActivity(payload, auth.token);
-      setMessage('Atividade lançada com sucesso.');
-    } catch (error) {
-      setMessage((error as Error).message);
-    }
-  }
+  const rows = [
+    {
+      id: 2868,
+      tipo: 'Autos de infração e imposição de multa',
+      data: '06/01/2026',
+      protocolo: '0955.560.0000115/2026',
+      documento: '05269966',
+      rc: '11.6.06.30.043.000',
+      cpf: '12.625.069/0001-90',
+      pontos: '173.4',
+      quantidade: '115.6',
+      valor: '44.424,00',
+      fiscal: 'Pedro de Melo',
+      obs: '--',
+    },
+    {
+      id: 2869,
+      tipo: 'Taxa de licença para publicidade',
+      data: '07/01/2026',
+      protocolo: '16138/2025',
+      documento: '05270031',
+      rc: '--',
+      cpf: '16.670.085/1399-00',
+      pontos: '6',
+      quantidade: '3',
+      valor: '1.156,42',
+      fiscal: 'Sisuley Zaniboni Gouveia',
+      obs: 'Localiza Araras',
+    },
+  ];
 
   return (
-    <Box sx={{ p: { xs: 2, md: 4 }, maxWidth: 1100, margin: '0 auto' }}>
-      <Stack spacing={3}>
-        <Typography variant="h4">Produtividade - Refatoração</Typography>
+    <Box sx={{ bgcolor: '#f2f2f2', minHeight: '100vh', pb: 6 }}>
+      <Box
+        sx={{
+          bgcolor: '#009688',
+          color: '#fff',
+          px: { xs: 2, md: 4 },
+          py: 2,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}
+      >
+        <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+          FISCALIZAÇÃO URBANA - PRODUTIVIDADE
+        </Typography>
+        <Button
+          variant="text"
+          sx={{ color: '#fff', fontWeight: 600 }}
+          startIcon={<CheckCircleOutline />}
+        >
+          SAIR
+        </Button>
+      </Box>
 
-        {message && <Alert severity="info">{message}</Alert>}
-
+      <Box sx={{ px: { xs: 2, md: 4 }, mt: -3 }}>
         <Paper sx={{ p: 3 }}>
-          <Stack spacing={2}>
-            <Typography variant="h6">Login</Typography>
+          <Tabs
+            value={activeTab}
+            onChange={(_, value) => setActiveTab(value)}
+            textColor="primary"
+            indicatorColor="primary"
+          >
+            <Tab label="ATIVIDADES A VALIDAR" />
+            <Tab label="VALIDADAS" />
+          </Tabs>
+
+          <Box
+            sx={{
+              mt: 2,
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: 2,
+              alignItems: 'center',
+            }}
+          >
+            <Button variant="contained" color="warning">
+              Relatório Descritivo
+            </Button>
+            <Button variant="contained" color="success">
+              Relatório de Produtividade
+            </Button>
+            <Button variant="contained" color="primary">
+              Relatório de Pontuação
+            </Button>
+            <Button variant="contained" color="success" startIcon={<TaskAlt />}>
+              Confirmar
+            </Button>
+            <Button variant="contained" color="success" startIcon={<Refresh />}>
+              Atualizar
+            </Button>
+            <Box sx={{ flex: 1 }} />
+            <Button variant="text" startIcon={<FilterList />}>
+              Filtrar
+            </Button>
             <TextField
-              label="Token JWT (opcional)"
-              value={token}
-              onChange={(event) => setToken(event.target.value)}
-              size="small"
-              fullWidth
+              label="Pesquisar"
+              variant="standard"
+              sx={{ minWidth: 220 }}
             />
-            <TextField
-              label="Login de desenvolvimento"
-              value={loginOverride}
-              onChange={(event) => setLoginOverride(event.target.value)}
-              size="small"
-              fullWidth
-            />
-            <Box>
-              <Button variant="contained" onClick={handleLogin}>
-                Entrar
-              </Button>
-            </Box>
-          </Stack>
+          </Box>
+
+          <TableContainer sx={{ mt: 3 }}>
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell>ID</TableCell>
+                  <TableCell>Tipo</TableCell>
+                  <TableCell>Data</TableCell>
+                  <TableCell>N° protocolo</TableCell>
+                  <TableCell>N° documento</TableCell>
+                  <TableCell>RC</TableCell>
+                  <TableCell>CPF/CNPJ</TableCell>
+                  <TableCell>Pontos</TableCell>
+                  <TableCell>Quantidade</TableCell>
+                  <TableCell>Valor</TableCell>
+                  <TableCell>Fiscal</TableCell>
+                  <TableCell>Observação</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {rows.map((row) => (
+                  <TableRow key={row.id}>
+                    <TableCell>{row.id}</TableCell>
+                    <TableCell>{row.tipo}</TableCell>
+                    <TableCell>{row.data}</TableCell>
+                    <TableCell>{row.protocolo}</TableCell>
+                    <TableCell>{row.documento}</TableCell>
+                    <TableCell>{row.rc}</TableCell>
+                    <TableCell>{row.cpf}</TableCell>
+                    <TableCell>{row.pontos}</TableCell>
+                    <TableCell>{row.quantidade}</TableCell>
+                    <TableCell>{row.valor}</TableCell>
+                    <TableCell>{row.fiscal}</TableCell>
+                    <TableCell>{row.obs}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
         </Paper>
 
-        <Paper sx={{ p: 3 }}>
-          <Stack spacing={2}>
-            <Typography variant="h6">Consulta de pontuação</Typography>
-            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-              <TextField
-                label="Período"
-                type="month"
-                value={period}
-                onChange={(event) => setPeriod(event.target.value)}
-                size="small"
-                sx={{ maxWidth: 200 }}
-                InputLabelProps={{ shrink: true }}
+        <Paper sx={{ p: 3, mt: 4 }}>
+          <Typography variant="h6" sx={{ mb: 2 }}>
+            Cadastrar Dedução
+          </Typography>
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
+              gap: 2,
+            }}
+          >
+            <TextField label="Dedução *" placeholder="Escolha..." />
+            <TextField label="Fiscal *" placeholder="Escolha..." />
+            <TextField label="Data de Vigência *" placeholder="dd/mm/aaaa" />
+            <TextField label="Justificativa" />
+          </Box>
+          <Box sx={{ mt: 3, display: 'flex', gap: 2 }}>
+            <Button variant="contained" color="warning">
+              Cadastrar
+            </Button>
+            <Button variant="outlined">Voltar</Button>
+          </Box>
+        </Paper>
+
+        <Paper sx={{ p: 3, mt: 4 }}>
+          <Typography variant="h6" sx={{ mb: 2 }}>
+            Cadastro de Atividades
+          </Typography>
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
+              gap: 2,
+              maxWidth: 720,
+            }}
+          >
+            <TextField label="Nome *" placeholder="Nome da atividade" />
+            <TextField label="Descrição *" placeholder="Descrição" />
+            <TextField label="Pontos *" type="number" placeholder="1.0" />
+            <TextField label="Tipo de Contabilização *" placeholder="Escolha..." />
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Typography variant="body2">Ativo:</Typography>
+              <Box
+                component="span"
+                sx={{ width: 18, height: 18, border: '1px solid #777' }}
               />
-              <Button variant="outlined" onClick={handleFetchPoints}>
-                Consultar
-              </Button>
-            </Stack>
-            {points && (
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={6} md={4}>
-                  <Paper variant="outlined" sx={{ p: 2 }}>
-                    <Typography variant="subtitle2">Pontuação</Typography>
-                    <Typography variant="h6">{points.pointsPontuacao}</Typography>
-                  </Paper>
-                </Grid>
-                <Grid item xs={12} sm={6} md={4}>
-                  <Paper variant="outlined" sx={{ p: 2 }}>
-                    <Typography variant="subtitle2">Dedução</Typography>
-                    <Typography variant="h6">{points.pointsDeducao}</Typography>
-                  </Paper>
-                </Grid>
-                <Grid item xs={12} sm={6} md={4}>
-                  <Paper variant="outlined" sx={{ p: 2 }}>
-                    <Typography variant="subtitle2">UFESP</Typography>
-                    <Typography variant="h6">{points.pointsUfesp}</Typography>
-                  </Paper>
-                </Grid>
-                <Grid item xs={12} sm={6} md={4}>
-                  <Paper variant="outlined" sx={{ p: 2 }}>
-                    <Typography variant="subtitle2">Total</Typography>
-                    <Typography variant="h6">{points.pointsTotal}</Typography>
-                  </Paper>
-                </Grid>
-                <Grid item xs={12} sm={6} md={4}>
-                  <Paper variant="outlined" sx={{ p: 2 }}>
-                    <Typography variant="subtitle2">Arrecadado</Typography>
-                    <Typography variant="h6">{points.totalCollected}</Typography>
-                  </Paper>
-                </Grid>
-                <Grid item xs={12} sm={6} md={4}>
-                  <Paper variant="outlined" sx={{ p: 2 }}>
-                    <Typography variant="subtitle2">Saldo</Typography>
-                    <Typography variant="h6">{points.remainingBalance}</Typography>
-                  </Paper>
-                </Grid>
-              </Grid>
-            )}
-          </Stack>
-        </Paper>
-
-        <Paper sx={{ p: 3 }}>
-          <Stack spacing={2}>
-            <Typography variant="h6">Lançar atividade</Typography>
-            <Divider />
-            <Grid container spacing={2}>
-              <Grid item xs={12} sm={4}>
-                <TextField
-                  label="Atividade (ID)"
-                  value={activityForm.activityId}
-                  onChange={(event) =>
-                    setActivityForm((prev) => ({
-                      ...prev,
-                      activityId: event.target.value,
-                    }))
-                  }
-                  size="small"
-                  fullWidth
-                />
-              </Grid>
-              <Grid item xs={12} sm={4}>
-                <TextField
-                  label="Fiscal (ID)"
-                  value={activityForm.fiscalId}
-                  onChange={(event) =>
-                    setActivityForm((prev) => ({
-                      ...prev,
-                      fiscalId: event.target.value,
-                    }))
-                  }
-                  size="small"
-                  fullWidth
-                />
-              </Grid>
-              <Grid item xs={12} sm={4}>
-                <TextField
-                  label="Empresa (ID)"
-                  value={activityForm.companyId}
-                  onChange={(event) =>
-                    setActivityForm((prev) => ({
-                      ...prev,
-                      companyId: event.target.value,
-                    }))
-                  }
-                  size="small"
-                  fullWidth
-                />
-              </Grid>
-              <Grid item xs={12} sm={4}>
-                <TextField
-                  label="Data de conclusão"
-                  type="date"
-                  value={activityForm.completedAt}
-                  onChange={(event) =>
-                    setActivityForm((prev) => ({
-                      ...prev,
-                      completedAt: event.target.value,
-                    }))
-                  }
-                  size="small"
-                  fullWidth
-                  InputLabelProps={{ shrink: true }}
-                />
-              </Grid>
-              <Grid item xs={12} sm={4}>
-                <TextField
-                  label="Documento"
-                  value={activityForm.document}
-                  onChange={(event) =>
-                    setActivityForm((prev) => ({
-                      ...prev,
-                      document: event.target.value,
-                    }))
-                  }
-                  size="small"
-                  fullWidth
-                />
-              </Grid>
-              <Grid item xs={12} sm={4}>
-                <TextField
-                  label="Protocolo"
-                  value={activityForm.protocol}
-                  onChange={(event) =>
-                    setActivityForm((prev) => ({
-                      ...prev,
-                      protocol: event.target.value,
-                    }))
-                  }
-                  size="small"
-                  fullWidth
-                />
-              </Grid>
-              <Grid item xs={12} sm={4}>
-                <TextField
-                  label="CPF/CNPJ"
-                  value={activityForm.cpfCnpj}
-                  onChange={(event) =>
-                    setActivityForm((prev) => ({
-                      ...prev,
-                      cpfCnpj: event.target.value,
-                    }))
-                  }
-                  size="small"
-                  fullWidth
-                />
-              </Grid>
-              <Grid item xs={12} sm={4}>
-                <TextField
-                  label="RC"
-                  value={activityForm.rc}
-                  onChange={(event) =>
-                    setActivityForm((prev) => ({ ...prev, rc: event.target.value }))
-                  }
-                  size="small"
-                  fullWidth
-                />
-              </Grid>
-              <Grid item xs={12} sm={4}>
-                <TextField
-                  label="Valor"
-                  value={activityForm.value}
-                  onChange={(event) =>
-                    setActivityForm((prev) => ({
-                      ...prev,
-                      value: event.target.value,
-                    }))
-                  }
-                  size="small"
-                  fullWidth
-                />
-              </Grid>
-              <Grid item xs={12} sm={4}>
-                <TextField
-                  label="Quantidade"
-                  value={activityForm.quantity}
-                  onChange={(event) =>
-                    setActivityForm((prev) => ({
-                      ...prev,
-                      quantity: event.target.value,
-                    }))
-                  }
-                  size="small"
-                  fullWidth
-                />
-              </Grid>
-              <Grid item xs={12} sm={8}>
-                <TextField
-                  label="Observações"
-                  value={activityForm.notes}
-                  onChange={(event) =>
-                    setActivityForm((prev) => ({
-                      ...prev,
-                      notes: event.target.value,
-                    }))
-                  }
-                  size="small"
-                  fullWidth
-                />
-              </Grid>
-            </Grid>
-            <Box>
-              <Button variant="contained" onClick={handleActivitySubmit}>
-                Lançar atividade
-              </Button>
             </Box>
-          </Stack>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Typography variant="body2">Aceita multiplicador:</Typography>
+              <Box
+                component="span"
+                sx={{ width: 18, height: 18, border: '1px solid #777' }}
+              />
+            </Box>
+          </Box>
+          <Box sx={{ mt: 3, display: 'flex', gap: 2 }}>
+            <Button variant="contained" color="warning">
+              Cadastrar
+            </Button>
+            <Button variant="outlined">Voltar</Button>
+          </Box>
+
+          <Paper variant="outlined" sx={{ mt: 4, p: 2 }}>
+            <Typography variant="subtitle1" sx={{ mb: 2 }}>
+              Atividades cadastradas
+            </Typography>
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell>ID</TableCell>
+                  <TableCell>Tipo</TableCell>
+                  <TableCell>Tipo de Cálculo</TableCell>
+                  <TableCell>Pontos</TableCell>
+                  <TableCell>Ativo</TableCell>
+                  <TableCell>Opções</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                <TableRow>
+                  <TableCell>159</TableCell>
+                  <TableCell>
+                    Taxa decorrente do poder de polícia administrativa
+                  </TableCell>
+                  <TableCell>UFESP</TableCell>
+                  <TableCell>2</TableCell>
+                  <TableCell>✔</TableCell>
+                  <TableCell>✎</TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </Paper>
         </Paper>
-      </Stack>
+      </Box>
     </Box>
   );
 }

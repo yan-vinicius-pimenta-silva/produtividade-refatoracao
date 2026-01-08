@@ -27,6 +27,10 @@ const privateRoutes = [
     element: <DashBoard />,
   },
   {
+    path: '/produtividade',
+    element: <Produtividade />,
+  },
+  {
     path: '/users',
     element: (
       <UsersProvider>
