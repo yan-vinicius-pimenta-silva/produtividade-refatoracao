@@ -5,6 +5,7 @@ import {
   Login,
   NotFound,
   PasswordReset,
+  Produtividade,
   Reports,
   Resources,
   UnauthorizedAccess,
@@ -16,6 +17,7 @@ import { PERMISSIONS } from '../permissions';
 
 const publicRoutes = [
   { path: '/login', element: <Login /> },
+  { path: '/produtividade', element: <Produtividade /> },
   { path: '/password-reset', element: <PasswordReset /> },
 ];
 
