@@ -2,6 +2,8 @@ using Api.Data;
 using Api.Helpers;
 using Api.Interfaces;
 using Api.Middlewares;
+using Api.Produtividade.Data;
+using Api.Produtividade.Services;
 using Api.Repositories;
 using DotNetEnv;
 using Microsoft.EntityFrameworkCore;
@@ -32,6 +34,7 @@ builder.WebHost.ConfigureKestrel(options =>
 var connectionString =
     $"Host={dbHost};Port={dbPort};Username={dbUser};Password={dbPassword};Database={dbName}";
 builder.Services.AddDbContext<ApiDbContext>(options => options.UseNpgsql(connectionString));
+builder.Services.AddDbContext<ProdutividadeDbContext>(options => options.UseNpgsql(connectionString));
 
 // --- Configurar Resend ---
 var resendApiKey = EnvLoader.GetEnv("RESEND_API_KEY");
@@ -45,6 +48,10 @@ builder.Services.AddTransient<ResendClient>();
 // --- Registrar repositório genérico ---
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 Console.WriteLine("Repositório genérico registrado.");
+
+// --- Produtividade services ---
+builder.Services.AddScoped<JwtService>();
+builder.Services.AddScoped<PointsCalculator>();
 
 // --- Registrar controllers ---
 builder.Services.AddControllers();

@@ -21,3 +21,7 @@ export type { UserFormValues } from './userInterfaces/UserFormValues';
 export type { UserOption } from './userInterfaces/UserOption';
 export type { UserRead } from './userInterfaces/UserRead';
 export type { UsersPagination } from './userInterfaces/UsersPagination';
+export type { ProdutividadeActivityPayload } from './produtividadeInterfaces/ProdutividadeActivityPayload';
+export type { ProdutividadeAuthResponse } from './produtividadeInterfaces/ProdutividadeAuthResponse';
+export type { ProdutividadeLoginPayload } from './produtividadeInterfaces/ProdutividadeLoginPayload';
+export type { ProdutividadePointsSummary } from './produtividadeInterfaces/ProdutividadePointsSummary';
