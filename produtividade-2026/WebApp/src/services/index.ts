@@ -26,3 +26,18 @@ export {
 } from './usersServices/listUsers';
 export { updateUser } from './usersServices/updateUser';
 export { deleteUser } from './usersServices/deleteUser';
+
+export {
+  confirmFiscalActivities,
+  createFiscalActivity,
+  createProdutividadeActivity,
+  deleteFiscalActivity,
+  deleteProdutividadeActivity,
+  fetchFiscalActivities,
+  fetchProdutividadeActivities,
+  fetchProdutividadeActivityTypes,
+  fetchProdutividadePoints,
+  fetchProdutividadeUsers,
+  produtividadeLogin,
+  updateProdutividadeActivity,
+} from './produtividadeServices';

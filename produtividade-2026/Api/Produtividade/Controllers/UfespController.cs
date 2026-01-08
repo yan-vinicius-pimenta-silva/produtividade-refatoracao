@@ -39,5 +39,39 @@ public class UfespController : ControllerBase
         return Ok(ufesp);
     }
 
+    [HttpPut("{year:int}")]
+    public async Task<ActionResult<UfespRate>> Update(int year, [FromBody] UfespRequest request)
+    {
+        var ufesp = await _dbContext.UfespRates.FirstOrDefaultAsync(rate => rate.Year == year);
+        if (ufesp == null)
+        {
+            return NotFound();
+        }
+
+        ufesp.Year = request.Year;
+        ufesp.Name = request.Name;
+        ufesp.Value = request.Value;
+        ufesp.IsActive = request.IsActive;
+
+        await _dbContext.SaveChangesAsync();
+
+        return Ok(ufesp);
+    }
+
+    [HttpDelete("{year:int}")]
+    public async Task<IActionResult> Delete(int year)
+    {
+        var ufesp = await _dbContext.UfespRates.FirstOrDefaultAsync(rate => rate.Year == year);
+        if (ufesp == null)
+        {
+            return NotFound();
+        }
+
+        _dbContext.UfespRates.Remove(ufesp);
+        await _dbContext.SaveChangesAsync();
+
+        return NoContent();
+    }
+
     public record UfespRequest(int Year, string Name, int Value, bool IsActive);
 }
