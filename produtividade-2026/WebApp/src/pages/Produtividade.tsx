@@ -41,7 +41,7 @@ import {
   updateProdutividadeActivity,
 } from '../services';
 import { useAuth, useNotification } from '../hooks';
-import {
+import type {
   ProdutividadeActivity,
   ProdutividadeActivityType,
   ProdutividadeFiscalActivitySummary,
