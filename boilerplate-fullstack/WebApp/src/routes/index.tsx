@@ -5,6 +5,7 @@ import {
   Login,
   NotFound,
   PasswordReset,
+  Produtividade,
   Reports,
   Resources,
   UnauthorizedAccess,
@@ -23,6 +24,10 @@ const privateRoutes = [
   {
     path: '/dashboard',
     element: <DashBoard />,
+  },
+  {
+    path: '/produtividade',
+    element: <Produtividade />,
   },
   {
     path: '/users',

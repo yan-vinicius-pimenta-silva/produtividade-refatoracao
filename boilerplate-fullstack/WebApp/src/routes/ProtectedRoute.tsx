@@ -1,11 +1,12 @@
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../hooks';
 import { hasPermission, isRootUser } from '../permissions/Rules';
+import type { ValidPermission } from '../permissions';
 import type { JSX } from 'react';
 
 interface ProtectedRouteProps {
   children: JSX.Element;
-  requiredPermission?: string;
+  requiredPermission?: ValidPermission;
 }
 
 export default function ProtectedRoute({
