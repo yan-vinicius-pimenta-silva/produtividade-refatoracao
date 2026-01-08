@@ -1,8 +1,14 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Box,
   Button,
+  Checkbox,
+  FormControl,
+  IconButton,
+  InputLabel,
+  MenuItem,
   Paper,
+  Select,
   Tab,
   Tabs,
   Table,
@@ -16,44 +22,307 @@ import {
 } from '@mui/material';
 import {
   CheckCircleOutline,
+  DeleteOutline,
+  Edit,
   FilterList,
   Refresh,
   TaskAlt,
 } from '@mui/icons-material';
+import {
+  confirmFiscalActivities,
+  createFiscalActivity,
+  createProdutividadeActivity,
+  deleteFiscalActivity,
+  deleteProdutividadeActivity,
+  fetchFiscalActivities,
+  fetchProdutividadeActivities,
+  fetchProdutividadeActivityTypes,
+  fetchProdutividadeUsers,
+  updateProdutividadeActivity,
+} from '../services';
+import { useAuth, useNotification } from '../hooks';
+import {
+  ProdutividadeActivity,
+  ProdutividadeActivityType,
+  ProdutividadeFiscalActivitySummary,
+  ProdutividadeUserSummary,
+} from '../interfaces';
+import { getErrorMessage } from '../helpers';
 
 export default function Produtividade() {
   const [activeTab, setActiveTab] = useState(0);
+  const [fiscalActivities, setFiscalActivities] = useState<
+    ProdutividadeFiscalActivitySummary[]
+  >([]);
+  const [selectedActivityIds, setSelectedActivityIds] = useState<number[]>([]);
+  const [activityCatalog, setActivityCatalog] = useState<ProdutividadeActivity[]>(
+    []
+  );
+  const [activityTypes, setActivityTypes] = useState<ProdutividadeActivityType[]>(
+    []
+  );
+  const [fiscais, setFiscais] = useState<ProdutividadeUserSummary[]>([]);
+  const [loadingActivities, setLoadingActivities] = useState(false);
+  const [loadingCatalog, setLoadingCatalog] = useState(false);
+  const [activityForm, setActivityForm] = useState({
+    id: null as number | null,
+    description: '',
+    points: '',
+    activityTypeId: '',
+    companyId: '',
+    isActive: true,
+    hasMultiplicator: false,
+    isOsActivity: false,
+  });
+  const [deducaoForm, setDeducaoForm] = useState({
+    activityId: '',
+    fiscalId: '',
+    completedAt: '',
+    notes: '',
+    quantity: '',
+  });
 
-  const rows = [
-    {
-      id: 2868,
-      tipo: 'Autos de infração e imposição de multa',
-      data: '06/01/2026',
-      protocolo: '0955.560.0000115/2026',
-      documento: '05269966',
-      rc: '11.6.06.30.043.000',
-      cpf: '12.625.069/0001-90',
-      pontos: '173.4',
-      quantidade: '115.6',
-      valor: '44.424,00',
-      fiscal: 'Pedro de Melo',
-      obs: '--',
-    },
-    {
-      id: 2869,
-      tipo: 'Taxa de licença para publicidade',
-      data: '07/01/2026',
-      protocolo: '16138/2025',
-      documento: '05270031',
-      rc: '--',
-      cpf: '16.670.085/1399-00',
-      pontos: '6',
-      quantidade: '3',
-      valor: '1.156,42',
-      fiscal: 'Sisuley Zaniboni Gouveia',
-      obs: 'Localiza Araras',
-    },
-  ];
+  const { token } = useAuth();
+  const { showNotification } = useNotification();
+
+  const parsedToken = useMemo(() => {
+    if (!token) return null;
+    const parts = token.split('.');
+    if (parts.length < 2) return null;
+    try {
+      const decoded = JSON.parse(atob(parts[1]));
+      return decoded as Record<string, string>;
+    } catch {
+      return null;
+    }
+  }, [token]);
+
+  const defaultCompanyId = parsedToken?.companyId
+    ? Number(parsedToken.companyId)
+    : null;
+
+  const deductionActivities = useMemo(
+    () =>
+      activityCatalog.filter((activity) => activity.calculationType === 3),
+    [activityCatalog]
+  );
+
+  const calculationLabel = (value: number) => {
+    if (value === 1) return 'UFESP';
+    if (value === 2) return 'Pontuação';
+    if (value === 3) return 'Dedução';
+    return '-';
+  };
+
+  const fetchInitialData = async () => {
+    if (!token) return;
+    try {
+      const [types, catalog, users] = await Promise.all([
+        fetchProdutividadeActivityTypes(token),
+        fetchProdutividadeActivities(token, {
+          companyId: defaultCompanyId ?? undefined,
+        }),
+        fetchProdutividadeUsers(token, 2),
+      ]);
+      setActivityTypes(types);
+      setActivityCatalog(catalog);
+      setFiscais(users);
+    } catch (error) {
+      showNotification(getErrorMessage(error), 'error');
+    }
+  };
+
+  const loadFiscalActivities = async () => {
+    if (!token) return;
+    setLoadingActivities(true);
+    try {
+      const activities = await fetchFiscalActivities(token, {
+        companyId: defaultCompanyId ?? undefined,
+        validated: activeTab === 1,
+      });
+      setFiscalActivities(activities);
+      setSelectedActivityIds([]);
+    } catch (error) {
+      showNotification(getErrorMessage(error), 'error');
+    } finally {
+      setLoadingActivities(false);
+    }
+  };
+
+  const loadCatalog = async () => {
+    if (!token) return;
+    setLoadingCatalog(true);
+    try {
+      const catalog = await fetchProdutividadeActivities(token, {
+        companyId: defaultCompanyId ?? undefined,
+      });
+      setActivityCatalog(catalog);
+    } catch (error) {
+      showNotification(getErrorMessage(error), 'error');
+    } finally {
+      setLoadingCatalog(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchInitialData();
+  }, [token]);
+
+  useEffect(() => {
+    loadFiscalActivities();
+  }, [token, activeTab]);
+
+  useEffect(() => {
+    if (defaultCompanyId && !activityForm.companyId) {
+      setActivityForm((prev) => ({ ...prev, companyId: String(defaultCompanyId) }));
+    }
+  }, [defaultCompanyId, activityForm.companyId]);
+
+  const toggleSelectActivity = (activityId: number) => {
+    setSelectedActivityIds((prev) =>
+      prev.includes(activityId)
+        ? prev.filter((id) => id !== activityId)
+        : [...prev, activityId]
+    );
+  };
+
+  const handleConfirm = async () => {
+    if (!token) return;
+    if (selectedActivityIds.length === 0) {
+      showNotification('Selecione ao menos uma atividade para confirmar.', 'warning');
+      return;
+    }
+    try {
+      await confirmFiscalActivities(token, selectedActivityIds);
+      showNotification('Atividades confirmadas com sucesso.', 'success');
+      await loadFiscalActivities();
+    } catch (error) {
+      showNotification(getErrorMessage(error), 'error');
+    }
+  };
+
+  const handleDeleteFiscalActivity = async (activityId: number) => {
+    if (!token) return;
+    try {
+      await deleteFiscalActivity(token, activityId);
+      showNotification('Atividade excluída com sucesso.', 'success');
+      await loadFiscalActivities();
+    } catch (error) {
+      showNotification(getErrorMessage(error), 'error');
+    }
+  };
+
+  const handleSaveCatalogActivity = async () => {
+    if (!token) return;
+    const parsedPoints = Number(activityForm.points);
+    const parsedActivityTypeId = Number(activityForm.activityTypeId);
+    const parsedCompanyId = Number(activityForm.companyId || defaultCompanyId || 0);
+
+    if (!activityForm.description || !parsedPoints || !parsedActivityTypeId) {
+      showNotification('Preencha os campos obrigatórios da atividade.', 'warning');
+      return;
+    }
+
+    const payload = {
+      description: activityForm.description,
+      points: parsedPoints,
+      isActive: activityForm.isActive,
+      hasMultiplicator: activityForm.hasMultiplicator,
+      isOsActivity: activityForm.isOsActivity,
+      activityTypeId: parsedActivityTypeId,
+      companyId: parsedCompanyId,
+    };
+
+    try {
+      if (activityForm.id) {
+        await updateProdutividadeActivity(token, activityForm.id, payload);
+        showNotification('Atividade atualizada com sucesso.', 'success');
+      } else {
+        await createProdutividadeActivity(token, payload);
+        showNotification('Atividade cadastrada com sucesso.', 'success');
+      }
+      setActivityForm({
+        id: null,
+        description: '',
+        points: '',
+        activityTypeId: '',
+        companyId: parsedCompanyId ? String(parsedCompanyId) : '',
+        isActive: true,
+        hasMultiplicator: false,
+        isOsActivity: false,
+      });
+      await loadCatalog();
+    } catch (error) {
+      showNotification(getErrorMessage(error), 'error');
+    }
+  };
+
+  const handleEditCatalog = (activity: ProdutividadeActivity) => {
+    setActivityForm({
+      id: activity.id,
+      description: activity.description,
+      points: String(activity.points),
+      activityTypeId: String(activity.activityTypeId),
+      companyId: String(activity.companyId),
+      isActive: activity.isActive,
+      hasMultiplicator: activity.hasMultiplicator,
+      isOsActivity: activity.isOsActivity,
+    });
+  };
+
+  const handleDeleteCatalog = async (activityId: number) => {
+    if (!token) return;
+    try {
+      await deleteProdutividadeActivity(token, activityId);
+      showNotification('Atividade removida com sucesso.', 'success');
+      await loadCatalog();
+    } catch (error) {
+      showNotification(getErrorMessage(error), 'error');
+    }
+  };
+
+  const handleCreateDeducao = async () => {
+    if (!token) return;
+    const activityId = Number(deducaoForm.activityId);
+    const fiscalId = Number(deducaoForm.fiscalId);
+    const quantity = deducaoForm.quantity ? Number(deducaoForm.quantity) : undefined;
+
+    if (!activityId || !fiscalId || !deducaoForm.completedAt) {
+      showNotification('Preencha os campos obrigatórios da dedução.', 'warning');
+      return;
+    }
+
+    try {
+      await createFiscalActivity(
+        {
+          activityId,
+          fiscalId,
+          companyId: defaultCompanyId ?? 0,
+          completedAt: deducaoForm.completedAt,
+          document: null,
+          protocol: null,
+          cpfCnpj: null,
+          rc: null,
+          value: null,
+          quantity: quantity ?? null,
+          notes: deducaoForm.notes || null,
+          attachments: [],
+        },
+        token
+      );
+      showNotification('Dedução cadastrada com sucesso.', 'success');
+      setDeducaoForm({
+        activityId: '',
+        fiscalId: '',
+        completedAt: '',
+        notes: '',
+        quantity: '',
+      });
+      await loadFiscalActivities();
+    } catch (error) {
+      showNotification(getErrorMessage(error), 'error');
+    }
+  };
 
   return (
     <Box sx={{ bgcolor: '#f2f2f2', minHeight: '100vh', pb: 6 }}>
@@ -110,10 +379,22 @@ export default function Produtividade() {
             <Button variant="contained" color="primary">
               Relatório de Pontuação
             </Button>
-            <Button variant="contained" color="success" startIcon={<TaskAlt />}>
+            <Button
+              variant="contained"
+              color="success"
+              startIcon={<TaskAlt />}
+              onClick={handleConfirm}
+              disabled={!selectedActivityIds.length}
+            >
               Confirmar
             </Button>
-            <Button variant="contained" color="success" startIcon={<Refresh />}>
+            <Button
+              variant="contained"
+              color="success"
+              startIcon={<Refresh />}
+              onClick={loadFiscalActivities}
+              disabled={loadingActivities}
+            >
               Atualizar
             </Button>
             <Box sx={{ flex: 1 }} />
@@ -131,6 +412,7 @@ export default function Produtividade() {
             <Table size="small">
               <TableHead>
                 <TableRow>
+                  <TableCell padding="checkbox" />
                   <TableCell>ID</TableCell>
                   <TableCell>Tipo</TableCell>
                   <TableCell>Data</TableCell>
@@ -143,23 +425,44 @@ export default function Produtividade() {
                   <TableCell>Valor</TableCell>
                   <TableCell>Fiscal</TableCell>
                   <TableCell>Observação</TableCell>
+                  <TableCell>Opções</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
-                {rows.map((row) => (
+                {fiscalActivities.map((row) => (
                   <TableRow key={row.id}>
+                    <TableCell padding="checkbox">
+                      <Checkbox
+                        checked={selectedActivityIds.includes(row.id)}
+                        onChange={() => toggleSelectActivity(row.id)}
+                      />
+                    </TableCell>
                     <TableCell>{row.id}</TableCell>
-                    <TableCell>{row.tipo}</TableCell>
-                    <TableCell>{row.data}</TableCell>
-                    <TableCell>{row.protocolo}</TableCell>
-                    <TableCell>{row.documento}</TableCell>
-                    <TableCell>{row.rc}</TableCell>
-                    <TableCell>{row.cpf}</TableCell>
-                    <TableCell>{row.pontos}</TableCell>
-                    <TableCell>{row.quantidade}</TableCell>
-                    <TableCell>{row.valor}</TableCell>
-                    <TableCell>{row.fiscal}</TableCell>
-                    <TableCell>{row.obs}</TableCell>
+                    <TableCell>{row.activityName}</TableCell>
+                    <TableCell>
+                      {row.completedAt
+                        ? new Date(row.completedAt).toLocaleDateString()
+                        : '--'}
+                    </TableCell>
+                    <TableCell>{row.protocol ?? '--'}</TableCell>
+                    <TableCell>{row.document ?? '--'}</TableCell>
+                    <TableCell>{row.rc ?? '--'}</TableCell>
+                    <TableCell>{row.cpfCnpj ?? '--'}</TableCell>
+                    <TableCell>{row.totalPoints ?? 0}</TableCell>
+                    <TableCell>{row.quantity ?? 0}</TableCell>
+                    <TableCell>
+                      {row.value ? row.value.toLocaleString('pt-BR') : '--'}
+                    </TableCell>
+                    <TableCell>{row.fiscalName}</TableCell>
+                    <TableCell>{row.notes ?? '--'}</TableCell>
+                    <TableCell>
+                      <IconButton
+                        color="error"
+                        onClick={() => handleDeleteFiscalActivity(row.id)}
+                      >
+                        <DeleteOutline fontSize="small" />
+                      </IconButton>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -178,13 +481,82 @@ export default function Produtividade() {
               gap: 2,
             }}
           >
-            <TextField label="Dedução *" placeholder="Escolha..." />
-            <TextField label="Fiscal *" placeholder="Escolha..." />
-            <TextField label="Data de Vigência *" placeholder="dd/mm/aaaa" />
-            <TextField label="Justificativa" />
+            <FormControl>
+              <InputLabel id="deducao-atividade-label">Dedução *</InputLabel>
+              <Select
+                labelId="deducao-atividade-label"
+                label="Dedução *"
+                value={deducaoForm.activityId}
+                onChange={(event) =>
+                  setDeducaoForm((prev) => ({
+                    ...prev,
+                    activityId: String(event.target.value),
+                  }))
+                }
+              >
+                {deductionActivities.map((activity) => (
+                  <MenuItem key={activity.id} value={activity.id}>
+                    {activity.description}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <FormControl>
+              <InputLabel id="deducao-fiscal-label">Fiscal *</InputLabel>
+              <Select
+                labelId="deducao-fiscal-label"
+                label="Fiscal *"
+                value={deducaoForm.fiscalId}
+                onChange={(event) =>
+                  setDeducaoForm((prev) => ({
+                    ...prev,
+                    fiscalId: String(event.target.value),
+                  }))
+                }
+              >
+                {fiscais.map((fiscal) => (
+                  <MenuItem key={fiscal.id} value={fiscal.id}>
+                    {fiscal.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <TextField
+              label="Data de Vigência *"
+              type="date"
+              InputLabelProps={{ shrink: true }}
+              value={deducaoForm.completedAt}
+              onChange={(event) =>
+                setDeducaoForm((prev) => ({
+                  ...prev,
+                  completedAt: event.target.value,
+                }))
+              }
+            />
+            <TextField
+              label="Quantidade"
+              type="number"
+              value={deducaoForm.quantity}
+              onChange={(event) =>
+                setDeducaoForm((prev) => ({
+                  ...prev,
+                  quantity: event.target.value,
+                }))
+              }
+            />
+            <TextField
+              label="Justificativa"
+              value={deducaoForm.notes}
+              onChange={(event) =>
+                setDeducaoForm((prev) => ({
+                  ...prev,
+                  notes: event.target.value,
+                }))
+              }
+            />
           </Box>
           <Box sx={{ mt: 3, display: 'flex', gap: 2 }}>
-            <Button variant="contained" color="warning">
+            <Button variant="contained" color="warning" onClick={handleCreateDeducao}>
               Cadastrar
             </Button>
             <Button variant="outlined">Voltar</Button>
@@ -203,28 +575,99 @@ export default function Produtividade() {
               maxWidth: 720,
             }}
           >
-            <TextField label="Nome *" placeholder="Nome da atividade" />
-            <TextField label="Descrição *" placeholder="Descrição" />
-            <TextField label="Pontos *" type="number" placeholder="1.0" />
-            <TextField label="Tipo de Contabilização *" placeholder="Escolha..." />
+            <TextField
+              label="Nome *"
+              placeholder="Nome da atividade"
+              value={activityForm.description}
+              onChange={(event) =>
+                setActivityForm((prev) => ({
+                  ...prev,
+                  description: event.target.value,
+                }))
+              }
+            />
+            <TextField
+              label="Pontos *"
+              type="number"
+              placeholder="1.0"
+              value={activityForm.points}
+              onChange={(event) =>
+                setActivityForm((prev) => ({ ...prev, points: event.target.value }))
+              }
+            />
+            <FormControl>
+              <InputLabel id="atividade-tipo-label">
+                Tipo de Contabilização *
+              </InputLabel>
+              <Select
+                labelId="atividade-tipo-label"
+                label="Tipo de Contabilização *"
+                value={activityForm.activityTypeId}
+                onChange={(event) =>
+                  setActivityForm((prev) => ({
+                    ...prev,
+                    activityTypeId: String(event.target.value),
+                  }))
+                }
+              >
+                {activityTypes.map((type) => (
+                  <MenuItem key={type.id} value={type.id}>
+                    {type.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <TextField
+              label="Empresa (ID)"
+              type="number"
+              value={activityForm.companyId}
+              onChange={(event) =>
+                setActivityForm((prev) => ({
+                  ...prev,
+                  companyId: event.target.value,
+                }))
+              }
+            />
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Typography variant="body2">Ativo:</Typography>
-              <Box
-                component="span"
-                sx={{ width: 18, height: 18, border: '1px solid #777' }}
+              <Checkbox
+                checked={activityForm.isActive}
+                onChange={(event) =>
+                  setActivityForm((prev) => ({
+                    ...prev,
+                    isActive: event.target.checked,
+                  }))
+                }
               />
+              <Typography variant="body2">Ativo</Typography>
             </Box>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Typography variant="body2">Aceita multiplicador:</Typography>
-              <Box
-                component="span"
-                sx={{ width: 18, height: 18, border: '1px solid #777' }}
+              <Checkbox
+                checked={activityForm.hasMultiplicator}
+                onChange={(event) =>
+                  setActivityForm((prev) => ({
+                    ...prev,
+                    hasMultiplicator: event.target.checked,
+                  }))
+                }
               />
+              <Typography variant="body2">Aceita multiplicador</Typography>
+            </Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Checkbox
+                checked={activityForm.isOsActivity}
+                onChange={(event) =>
+                  setActivityForm((prev) => ({
+                    ...prev,
+                    isOsActivity: event.target.checked,
+                  }))
+                }
+              />
+              <Typography variant="body2">Atividade OS</Typography>
             </Box>
           </Box>
           <Box sx={{ mt: 3, display: 'flex', gap: 2 }}>
-            <Button variant="contained" color="warning">
-              Cadastrar
+            <Button variant="contained" color="warning" onClick={handleSaveCatalogActivity}>
+              {activityForm.id ? 'Atualizar' : 'Cadastrar'}
             </Button>
             <Button variant="outlined">Voltar</Button>
           </Box>
@@ -245,16 +688,30 @@ export default function Produtividade() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                <TableRow>
-                  <TableCell>159</TableCell>
-                  <TableCell>
-                    Taxa decorrente do poder de polícia administrativa
-                  </TableCell>
-                  <TableCell>UFESP</TableCell>
-                  <TableCell>2</TableCell>
-                  <TableCell>✔</TableCell>
-                  <TableCell>✎</TableCell>
-                </TableRow>
+                {activityCatalog.map((activity) => (
+                  <TableRow key={activity.id}>
+                    <TableCell>{activity.id}</TableCell>
+                    <TableCell>{activity.description}</TableCell>
+                    <TableCell>{calculationLabel(activity.calculationType)}</TableCell>
+                    <TableCell>{activity.points}</TableCell>
+                    <TableCell>{activity.isActive ? '✔' : '--'}</TableCell>
+                    <TableCell>
+                      <IconButton
+                        color="primary"
+                        onClick={() => handleEditCatalog(activity)}
+                      >
+                        <Edit fontSize="small" />
+                      </IconButton>
+                      <IconButton
+                        color="error"
+                        onClick={() => handleDeleteCatalog(activity.id)}
+                        disabled={loadingCatalog}
+                      >
+                        <DeleteOutline fontSize="small" />
+                      </IconButton>
+                    </TableCell>
+                  </TableRow>
+                ))}
               </TableBody>
             </Table>
           </Paper>

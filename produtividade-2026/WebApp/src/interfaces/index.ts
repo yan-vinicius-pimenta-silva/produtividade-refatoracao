@@ -25,3 +25,7 @@ export type { ProdutividadeActivityPayload } from './produtividadeInterfaces/Pro
 export type { ProdutividadeAuthResponse } from './produtividadeInterfaces/ProdutividadeAuthResponse';
 export type { ProdutividadeLoginPayload } from './produtividadeInterfaces/ProdutividadeLoginPayload';
 export type { ProdutividadePointsSummary } from './produtividadeInterfaces/ProdutividadePointsSummary';
+export type { ProdutividadeActivity } from './produtividadeInterfaces/ProdutividadeActivity';
+export type { ProdutividadeActivityType } from './produtividadeInterfaces/ProdutividadeActivityType';
+export type { ProdutividadeFiscalActivitySummary } from './produtividadeInterfaces/ProdutividadeFiscalActivitySummary';
+export type { ProdutividadeUserSummary } from './produtividadeInterfaces/ProdutividadeUserSummary';
