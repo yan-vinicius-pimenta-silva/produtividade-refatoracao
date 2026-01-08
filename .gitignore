@@ -33,6 +33,7 @@ user_guide_src/cilexer/pycilexer.egg-info/*
 
 # application/third_party/mpdf/*
 # application/controllers/Login.php
+node_modules/
 node_modules/*
 uploads/empresa_1/*
 uploads/empresa_2/*
