@@ -140,6 +140,29 @@ A tabela de atividades é mantida na tela de parâmetros, com possibilidade de i
 ## Parâmetros de empresa
 A empresa possui um JSON de parâmetros com flags como `validar` (ativar validação por fiscal administrador) e `reserva`. Esse JSON é carregado na sessão no login. 【F:Documentação do sistema.md†L16-L23】【F:application/controllers/Login.php†L88-L100】
 
+## Modelagem do banco de dados (migrations)
+> Abaixo está o que é possível inferir diretamente das migrations do CodeIgniter. As tabelas históricas (`usuarios`, `empresa`, `atividade`, etc.) existem no legado, mas não aparecem nas migrations do repositório atual.
+
+### Tabelas e relacionamentos principais
+- **usuario_empresa**: vínculo de usuário com empresa (`id_usuario`, `id_empresa`, `ativo`).【F:application/migrations/001_add_usuario_empresa.php†L9-L39】
+- **ordem_servico**: OS com referência a atividade/chefe/fiscal/empresa, metadados e campos de status (`excluido`, `validado`, `is_respondido`).【F:application/migrations/002_add_table_ordem_servico.php†L11-L78】
+- **historico_ordem_servico**: histórico de status da OS (`id_ordem_servico`, `id_usuario`, `id_status`, `descricao`, `observacao`, `anexo`).【F:application/migrations/003_add_table_historico_ordem_servico.php†L11-L61】
+- **status**: tabela de status com valores iniciais (Aguardando Fiscal/Chefe, Finalizado, Cancelado).【F:application/migrations/004_add_table_status.php†L11-L33】
+- **tipo_atividade**: catálogo de tipos de atividade (UFESP/Pontuação/Dedução).【F:application/migrations/005_add_table_tipo_atividade.php†L11-L31】
+- **atividade** (coluna adicionada): `id_tipo_atividade` em `atividade` para ligação ao tipo de cálculo.【F:application/migrations/006_add_column_tipo_atividade_atividade.php†L9-L16】
+- **unidade_fiscal**: valores de UFESP por ano (`ano`, `nome`, `valor`, `ativo`).【F:application/migrations/007_add_table_unidade_fiscal.php†L11-L33】
+- **atividade_fiscal**: lançamentos de atividades fiscais com documento, protocolo, CPF/CNPJ, UFESP, valores e metadados de validação/exclusão. 【F:application/migrations/008_add_table_atividade_fiscal.php†L11-L102】
+- **atividade_fiscal_anexo**: anexos vinculados a `atividade_fiscal`.【F:application/migrations/009_add_table_atividade_fiscal_anexo.php†L11-L36】
+- **atividade_fiscal_contabilizada**: agregados por atividade/fiscal/período (`data_vigencia`) com total de pontos e valores. Tem constraint única (`id_atividade`, `id_fiscal`, `data_vigencia`).【F:application/migrations/010_add_table_atividade_fiscal_contabilizada.php†L11-L43】
+- **total_ponto_fiscal**: totais por fiscal e período, incluindo pontos por tipo e saldo. Tem constraint única (`id_fiscal`, `data_vigencia`).【F:application/migrations/011_add_table_total_ponto_fiscal.php†L11-L55】
+- **banco_ponto_fiscal**: saldo remanescente mensal de pontos por fiscal, com constraint única (`id_fiscal`, `data_vigencia`).【F:application/migrations/012_add_table_banco_ponto_fiscal.php†L11-L39】
+
+### Observações sobre o modelo (falhas e redundâncias)
+1. **Sem chaves estrangeiras explícitas**: as migrations criam colunas `id_*` mas não definem FKs, o que dificulta integridade referencial e limpeza de dados órfãos.【F:application/migrations/001_add_usuario_empresa.php†L9-L39】【F:application/migrations/008_add_table_atividade_fiscal.php†L11-L102】
+2. **Campos `id` como `INT` sem constraints**: diversos relacionamentos usam `INT` simples sem `NOT NULL`, permitindo registros incompletos ou inconsistentes (ex.: OS sem fiscal/chefe).【F:application/migrations/002_add_table_ordem_servico.php†L11-L78】
+3. **Duplicidade de dados de status**: `ordem_servico` guarda flags (`excluido`, `validado`, `is_respondido`) e também possui histórico em `historico_ordem_servico`, o que pode levar a redundância e divergência de estado. 【F:application/migrations/002_add_table_ordem_servico.php†L50-L70】【F:application/migrations/003_add_table_historico_ordem_servico.php†L11-L61】
+4. **Ausência de migrations para tabelas-base do legado**: `usuarios`, `empresa`, `atividade` e outras tabelas críticas não estão versionadas nas migrations atuais, dificultando reconstrução completa do banco. 【F:application/migrations/006_add_column_tipo_atividade_atividade.php†L9-L16】
+
 ## Falhas de segurança e riscos identificados
 > Pontos para priorização de correção/refatoração.
 
