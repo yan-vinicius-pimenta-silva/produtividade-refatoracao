@@ -4,6 +4,7 @@ using Api.Interfaces;
 using Api.Middlewares;
 using Api.Produtividade.Data;
 using Api.Produtividade.Services;
+using Api.Produtividade.Controllers;
 using Api.Repositories;
 using DotNetEnv;
 using Microsoft.EntityFrameworkCore;
@@ -72,7 +73,8 @@ builder.Services.AddScoped<JwtService>();
 builder.Services.AddScoped<PointsCalculator>();
 
 // --- Registrar controllers ---
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddApplicationPart(typeof(ActivityTypesController).Assembly);
 
 // --- Configurar CORS ---
 var frontendUrl = EnvLoader.GetEnv("WEB_APP_URL");
