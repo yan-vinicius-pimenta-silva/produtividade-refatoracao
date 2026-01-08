@@ -15,11 +15,8 @@ Env.Load();
 var logger = Logger.LogToConsole("Startup");
 
 // --- Variáveis da connection string ---
-var dbHost = EnvLoader.GetEnv("DB_HOST");
-var dbPort = EnvLoader.GetEnv("DB_PORT");
-var dbUser = EnvLoader.GetEnv("DB_USER");
-var dbPassword = EnvLoader.GetEnv("DB_PASSWORD");
-var dbName = EnvLoader.GetEnv("DB_NAME");
+var dbProvider = Environment.GetEnvironmentVariable("DB_PROVIDER") ?? "postgres";
+string? connectionString = null;
 
 // --- Configurar Kestrel ---
 var builder = WebApplication.CreateBuilder(args);
@@ -31,10 +28,31 @@ builder.WebHost.ConfigureKestrel(options =>
 });
 
 // --- Configurar DbContext ---
-var connectionString =
-    $"Host={dbHost};Port={dbPort};Username={dbUser};Password={dbPassword};Database={dbName}";
-builder.Services.AddDbContext<ApiDbContext>(options => options.UseNpgsql(connectionString));
-builder.Services.AddDbContext<ProdutividadeDbContext>(options => options.UseNpgsql(connectionString));
+if (dbProvider.Equals("sqlite", StringComparison.OrdinalIgnoreCase))
+{
+    var sqlitePath = Environment.GetEnvironmentVariable("DB_SQLITE_PATH") ?? "data/app.db";
+    var sqliteDirectory = Path.GetDirectoryName(sqlitePath);
+    if (!string.IsNullOrWhiteSpace(sqliteDirectory))
+    {
+        Directory.CreateDirectory(sqliteDirectory);
+    }
+    connectionString = $"Data Source={sqlitePath}";
+    builder.Services.AddDbContext<ApiDbContext>(options => options.UseSqlite(connectionString));
+    builder.Services.AddDbContext<ProdutividadeDbContext>(options => options.UseSqlite(connectionString));
+}
+else
+{
+    var dbHost = EnvLoader.GetEnv("DB_HOST");
+    var dbPort = EnvLoader.GetEnv("DB_PORT");
+    var dbUser = EnvLoader.GetEnv("DB_USER");
+    var dbPassword = EnvLoader.GetEnv("DB_PASSWORD");
+    var dbName = EnvLoader.GetEnv("DB_NAME");
+
+    connectionString =
+        $"Host={dbHost};Port={dbPort};Username={dbUser};Password={dbPassword};Database={dbName}";
+    builder.Services.AddDbContext<ApiDbContext>(options => options.UseNpgsql(connectionString));
+    builder.Services.AddDbContext<ProdutividadeDbContext>(options => options.UseNpgsql(connectionString));
+}
 
 // --- Configurar Resend ---
 var resendApiKey = EnvLoader.GetEnv("RESEND_API_KEY");

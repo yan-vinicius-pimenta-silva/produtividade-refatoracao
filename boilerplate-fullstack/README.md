@@ -83,7 +83,7 @@ admin-panel-boilerplate/
 
 ## Quick start (Produtividade)
 
-### Opção 1: com Docker Compose
+### Opção 1: com Docker Compose (PostgreSQL)
 
 ```bash
 cd boilerplate-fullstack
@@ -97,20 +97,26 @@ Em seguida:
 - Frontend: `http://localhost:5173`
 - Acesse a tela de produtividade em `http://localhost:5173/produtividade`
 
-### Opção 2: local (sem Docker)
+### Opção 2: local (sem Docker) usando SQLite
 
-1. Suba o banco de dados (ou configure um PostgreSQL local):
+1. Configure o `.env` para SQLite:
 
 ```bash
-cd boilerplate-fullstack
-docker compose up -d db
+cd boilerplate-fullstack/Api
+cp .env.example .env
+```
+
+No `.env`, ajuste:
+
+```
+DB_PROVIDER=sqlite
+DB_SQLITE_PATH=data/app.db
 ```
 
 2. Inicie o backend:
 
 ```bash
 cd boilerplate-fullstack/Api
-cp .env.example .env
 dotnet run
 ```
 
