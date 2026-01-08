@@ -74,7 +74,8 @@ builder.Services.AddScoped<PointsCalculator>();
 
 // --- Registrar controllers ---
 builder.Services.AddControllers()
-    .AddApplicationPart(typeof(ActivityTypesController).Assembly);
+    .AddApplicationPart(typeof(ActivityTypesController).Assembly)
+    .AddControllersAsServices();
 
 // --- Configurar CORS ---
 var frontendUrl = EnvLoader.GetEnv("WEB_APP_URL");
