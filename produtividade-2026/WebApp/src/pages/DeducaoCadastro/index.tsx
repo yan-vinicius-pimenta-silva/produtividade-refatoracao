@@ -4,6 +4,7 @@ import {
   Button,
   Card,
   CardContent,
+  Divider,
   Grid,
   MenuItem,
   TextField,
@@ -28,26 +29,45 @@ export default function DeducaoCadastro() {
   const [vigencia, setVigencia] = useState('');
   const [justificativa, setJustificativa] = useState('');
 
+  const renderSelectValue = (value: string) => value || 'Escolha...';
+
   return (
     <Box sx={{ bgcolor: '#f6f7fb', minHeight: '100vh', py: 4, px: { xs: 2, md: 4 } }}>
       <Card sx={{ borderRadius: 3, boxShadow: 3 }}>
         <CardContent sx={{ p: { xs: 3, md: 4 } }}>
-          <Typography variant="h6" sx={{ fontWeight: 700, mb: 3 }}>
+          <Typography variant="h6" sx={{ fontWeight: 700, mb: 1 }}>
             Cadastrar Dedução
           </Typography>
+          <Divider sx={{ mb: 3 }} />
 
           <Grid container spacing={3}>
-            <Grid item xs={12} md={6}>
+            <Grid item xs={12} md={3}>
+              <Typography
+                component="label"
+                htmlFor="deducao"
+                sx={{ fontWeight: 600, color: 'text.secondary' }}
+              >
+                Dedução:{' '}
+                <Box component="span" sx={{ color: 'error.main' }}>
+                  *
+                </Box>
+              </Typography>
+            </Grid>
+            <Grid item xs={12} md={9}>
               <TextField
+                id="deducao"
                 select
                 fullWidth
                 required
-                label="Dedução"
                 value={deducao}
                 onChange={(event) => setDeducao(event.target.value)}
-                placeholder="Escolha..."
+                variant="standard"
+                SelectProps={{
+                  displayEmpty: true,
+                  renderValue: (selected) => renderSelectValue(selected as string),
+                }}
               >
-                <MenuItem value="" disabled>
+                <MenuItem value="">
                   Escolha...
                 </MenuItem>
                 {deductions.map((item) => (
@@ -58,17 +78,33 @@ export default function DeducaoCadastro() {
               </TextField>
             </Grid>
 
-            <Grid item xs={12} md={6}>
+            <Grid item xs={12} md={3}>
+              <Typography
+                component="label"
+                htmlFor="fiscal"
+                sx={{ fontWeight: 600, color: 'text.secondary' }}
+              >
+                Fiscal:{' '}
+                <Box component="span" sx={{ color: 'error.main' }}>
+                  *
+                </Box>
+              </Typography>
+            </Grid>
+            <Grid item xs={12} md={9}>
               <TextField
+                id="fiscal"
                 select
                 fullWidth
                 required
-                label="Fiscal"
                 value={fiscal}
                 onChange={(event) => setFiscal(event.target.value)}
-                placeholder="Escolha..."
+                variant="standard"
+                SelectProps={{
+                  displayEmpty: true,
+                  renderValue: (selected) => renderSelectValue(selected as string),
+                }}
               >
-                <MenuItem value="" disabled>
+                <MenuItem value="">
                   Escolha...
                 </MenuItem>
                 {fiscals.map((item) => (
@@ -79,26 +115,50 @@ export default function DeducaoCadastro() {
               </TextField>
             </Grid>
 
-            <Grid item xs={12} md={6}>
+            <Grid item xs={12} md={3}>
+              <Typography
+                component="label"
+                htmlFor="vigencia"
+                sx={{ fontWeight: 600, color: 'text.secondary' }}
+              >
+                Data de Vigência:{' '}
+                <Box component="span" sx={{ color: 'error.main' }}>
+                  *
+                </Box>
+              </Typography>
+            </Grid>
+            <Grid item xs={12} md={9}>
               <TextField
+                id="vigencia"
                 fullWidth
                 required
-                label="Data de Vigência"
                 type="date"
                 value={vigencia}
                 onChange={(event) => setVigencia(event.target.value)}
                 InputLabelProps={{ shrink: true }}
+                inputProps={{ placeholder: 'dd/mm/aaaa' }}
+                variant="standard"
               />
             </Grid>
 
-            <Grid item xs={12}>
+            <Grid item xs={12} md={3}>
+              <Typography
+                component="label"
+                htmlFor="justificativa"
+                sx={{ fontWeight: 600, color: 'text.secondary' }}
+              >
+                Justificativa:
+              </Typography>
+            </Grid>
+            <Grid item xs={12} md={9}>
               <TextField
+                id="justificativa"
                 fullWidth
-                label="Justificativa"
                 value={justificativa}
                 onChange={(event) => setJustificativa(event.target.value)}
                 multiline
-                minRows={3}
+                minRows={2}
+                variant="standard"
               />
             </Grid>
           </Grid>

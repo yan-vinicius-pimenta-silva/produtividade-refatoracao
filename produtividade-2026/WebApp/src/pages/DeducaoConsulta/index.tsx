@@ -4,6 +4,7 @@ import {
   Button,
   Card,
   CardContent,
+  Divider,
   MenuItem,
   Table,
   TableBody,
@@ -45,9 +46,10 @@ export default function DeducaoConsulta() {
     <Box sx={{ bgcolor: '#f6f7fb', minHeight: '100vh', py: 4, px: { xs: 2, md: 4 } }}>
       <Card sx={{ borderRadius: 3, boxShadow: 3 }}>
         <CardContent sx={{ p: { xs: 3, md: 4 } }}>
-          <Typography variant="h6" sx={{ fontWeight: 700, mb: 3 }}>
-            Consulta de Deduções
+          <Typography variant="h6" sx={{ fontWeight: 700, mb: 1, textTransform: 'uppercase' }}>
+            Consulta de deduções
           </Typography>
+          <Divider sx={{ mb: 3 }} />
 
           <Box
             sx={{
@@ -59,20 +61,24 @@ export default function DeducaoConsulta() {
               mb: 2,
             }}
           >
-            <TextField
-              select
-              label="Resultados por página"
-              variant="standard"
-              value={pageSize}
-              onChange={(event) => setPageSize(Number(event.target.value))}
-              sx={{ minWidth: 220 }}
-            >
-              {pageSizes.map((size) => (
-                <MenuItem key={size} value={size}>
-                  {size}
-                </MenuItem>
-              ))}
-            </TextField>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <TextField
+                select
+                variant="standard"
+                value={pageSize}
+                onChange={(event) => setPageSize(Number(event.target.value))}
+                sx={{ minWidth: 80 }}
+              >
+                {pageSizes.map((size) => (
+                  <MenuItem key={size} value={size}>
+                    {size}
+                  </MenuItem>
+                ))}
+              </TextField>
+              <Typography variant="body2" color="text.secondary">
+                resultados por página
+              </Typography>
+            </Box>
 
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <FilterList fontSize="small" color="action" />
@@ -82,7 +88,7 @@ export default function DeducaoConsulta() {
 
           <TableContainer sx={{ mt: 3, borderRadius: 2, border: '1px solid #e0e0e0' }}>
             <Table size="small">
-              <TableHead sx={{ bgcolor: '#f3f4f6' }}>
+              <TableHead>
                 <TableRow>
                   {columns.map((column) => (
                     <TableCell key={column} sx={{ fontWeight: 600 }}>
