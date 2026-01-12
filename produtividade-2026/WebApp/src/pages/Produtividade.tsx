@@ -3,6 +3,7 @@ import {
   Box,
   Button,
   Checkbox,
+  Divider,
   FormControl,
   IconButton,
   InputLabel,
@@ -25,7 +26,9 @@ import {
   DeleteOutline,
   Edit,
   FilterList,
+  FormatListBulleted,
   Refresh,
+  TaskAlt as TaskAltIcon,
   TaskAlt,
 } from '@mui/icons-material';
 import {
@@ -325,19 +328,20 @@ export default function Produtividade() {
   };
 
   return (
-    <Box sx={{ bgcolor: '#f2f2f2', minHeight: '100vh', pb: 6 }}>
+    <Box sx={{ bgcolor: '#ececec', minHeight: '100vh', pb: 6 }}>
       <Box
         sx={{
           bgcolor: '#009688',
           color: '#fff',
           px: { xs: 2, md: 4 },
-          py: 2,
+          py: 2.5,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
+          boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
         }}
       >
-        <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+        <Typography variant="subtitle1" sx={{ fontWeight: 600, letterSpacing: 0.3 }}>
           FISCALIZAÇÃO URBANA - PRODUTIVIDADE
         </Typography>
         <Button
@@ -350,82 +354,110 @@ export default function Produtividade() {
       </Box>
 
       <Box sx={{ px: { xs: 2, md: 4 }, mt: -3 }}>
-        <Paper sx={{ p: 3 }}>
+        <Paper sx={{ p: 3, borderRadius: 1.5, boxShadow: 2 }}>
           <Tabs
             value={activeTab}
             onChange={(_, value) => setActiveTab(value)}
             textColor="primary"
             indicatorColor="primary"
+            sx={{
+              '& .MuiTab-root': {
+                fontWeight: 600,
+                minHeight: 48,
+                textTransform: 'none',
+              },
+            }}
           >
-            <Tab label="ATIVIDADES A VALIDAR" />
-            <Tab label="VALIDADAS" />
+            <Tab
+              label="ATIVIDADES A VALIDAR"
+              icon={<FormatListBulleted fontSize="small" />}
+              iconPosition="start"
+            />
+            <Tab
+              label="VALIDADAS"
+              icon={<TaskAltIcon fontSize="small" />}
+              iconPosition="start"
+            />
           </Tabs>
+
+          <Divider sx={{ mt: 1, mb: 2 }} />
 
           <Box
             sx={{
-              mt: 2,
               display: 'flex',
               flexWrap: 'wrap',
-              gap: 2,
+              gap: 1.5,
               alignItems: 'center',
+              justifyContent: 'space-between',
             }}
           >
-            <Button variant="contained" color="warning">
-              Relatório Descritivo
-            </Button>
-            <Button variant="contained" color="success">
-              Relatório de Produtividade
-            </Button>
-            <Button variant="contained" color="primary">
-              Relatório de Pontuação
-            </Button>
-            <Button
-              variant="contained"
-              color="success"
-              startIcon={<TaskAlt />}
-              onClick={handleConfirm}
-              disabled={!selectedActivityIds.length}
-            >
-              Confirmar
-            </Button>
-            <Button
-              variant="contained"
-              color="success"
-              startIcon={<Refresh />}
-              onClick={loadFiscalActivities}
-              disabled={loadingActivities}
-            >
-              Atualizar
-            </Button>
-            <Box sx={{ flex: 1 }} />
-            <Button variant="text" startIcon={<FilterList />}>
-              Filtrar
-            </Button>
-            <TextField
-              label="Pesquisar"
-              variant="standard"
-              sx={{ minWidth: 220 }}
-            />
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5 }}>
+              <Button variant="contained" color="warning">
+                Relatório Descritivo
+              </Button>
+              <Button variant="contained" color="success">
+                Relatório de Produtividade
+              </Button>
+              <Button variant="contained" color="primary">
+                Relatório de Pontuação
+              </Button>
+            </Box>
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5 }}>
+              <Button
+                variant="contained"
+                color="success"
+                startIcon={<TaskAlt />}
+                onClick={handleConfirm}
+                disabled={!selectedActivityIds.length}
+              >
+                Confirmar
+              </Button>
+              <Button
+                variant="contained"
+                color="success"
+                startIcon={<Refresh />}
+                onClick={loadFiscalActivities}
+                disabled={loadingActivities}
+              >
+                Atualizar
+              </Button>
+            </Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <Button variant="text" startIcon={<FilterList />} sx={{ color: '#424242' }}>
+                Filtrar
+              </Button>
+              <TextField
+                label="Pesquisar"
+                variant="standard"
+                sx={{ minWidth: 220 }}
+              />
+            </Box>
           </Box>
 
-          <TableContainer sx={{ mt: 3 }}>
+          <TableContainer
+            sx={{
+              mt: 3,
+              borderRadius: 1,
+              border: '1px solid #e0e0e0',
+            }}
+          >
             <Table size="small">
-              <TableHead>
+              <TableHead sx={{ bgcolor: '#f5f5f5' }}>
                 <TableRow>
-                  <TableCell padding="checkbox" />
-                  <TableCell>ID</TableCell>
-                  <TableCell>Tipo</TableCell>
-                  <TableCell>Data</TableCell>
-                  <TableCell>N° protocolo</TableCell>
-                  <TableCell>N° documento</TableCell>
-                  <TableCell>RC</TableCell>
-                  <TableCell>CPF/CNPJ</TableCell>
-                  <TableCell>Pontos</TableCell>
-                  <TableCell>Quantidade</TableCell>
-                  <TableCell>Valor</TableCell>
-                  <TableCell>Fiscal</TableCell>
-                  <TableCell>Observação</TableCell>
-                  <TableCell>Opções</TableCell>
+                  <TableCell padding="checkbox" sx={{ fontWeight: 600 }} />
+                  <TableCell sx={{ fontWeight: 600 }}>ID</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Tipo</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Data</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>N° protocolo</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>N° documento</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>RC</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>CPF/CNPJ</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Pontos</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Quantidade</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Valor</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Fiscal</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Observação</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Opções</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -470,22 +502,25 @@ export default function Produtividade() {
           </TableContainer>
         </Paper>
 
-        <Paper sx={{ p: 3, mt: 4 }}>
-          <Typography variant="h6" sx={{ mb: 2 }}>
+        <Paper sx={{ p: 3, mt: 4, borderRadius: 1.5, boxShadow: 2 }}>
+          <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
             Cadastrar Dedução
           </Typography>
+          <Divider sx={{ mb: 3 }} />
           <Box
             sx={{
               display: 'grid',
-              gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
-              gap: 2,
+              gridTemplateColumns: { xs: '1fr', md: '180px 1fr' },
+              gap: 2.5,
+              alignItems: 'center',
             }}
           >
+            <Typography variant="body2" sx={{ fontWeight: 600 }}>
+              Dedução: <Box component="span" sx={{ color: 'error.main' }}>*</Box>
+            </Typography>
             <FormControl>
-              <InputLabel id="deducao-atividade-label">Dedução *</InputLabel>
               <Select
-                labelId="deducao-atividade-label"
-                label="Dedução *"
+                displayEmpty
                 value={deducaoForm.activityId}
                 onChange={(event) =>
                   setDeducaoForm((prev) => ({
@@ -493,7 +528,13 @@ export default function Produtividade() {
                     activityId: String(event.target.value),
                   }))
                 }
+                renderValue={(selected) =>
+                  selected ? selected : <em>Escolha...</em>
+                }
               >
+                <MenuItem value="">
+                  <em>Escolha...</em>
+                </MenuItem>
                 {deductionActivities.map((activity) => (
                   <MenuItem key={activity.id} value={activity.id}>
                     {activity.description}
@@ -501,11 +542,12 @@ export default function Produtividade() {
                 ))}
               </Select>
             </FormControl>
+            <Typography variant="body2" sx={{ fontWeight: 600 }}>
+              Fiscal: <Box component="span" sx={{ color: 'error.main' }}>*</Box>
+            </Typography>
             <FormControl>
-              <InputLabel id="deducao-fiscal-label">Fiscal *</InputLabel>
               <Select
-                labelId="deducao-fiscal-label"
-                label="Fiscal *"
+                displayEmpty
                 value={deducaoForm.fiscalId}
                 onChange={(event) =>
                   setDeducaoForm((prev) => ({
@@ -513,7 +555,13 @@ export default function Produtividade() {
                     fiscalId: String(event.target.value),
                   }))
                 }
+                renderValue={(selected) =>
+                  selected ? selected : <em>Escolha...</em>
+                }
               >
+                <MenuItem value="">
+                  <em>Escolha...</em>
+                </MenuItem>
                 {fiscais.map((fiscal) => (
                   <MenuItem key={fiscal.id} value={fiscal.id}>
                     {fiscal.name}
@@ -521,8 +569,13 @@ export default function Produtividade() {
                 ))}
               </Select>
             </FormControl>
+            <Typography variant="body2" sx={{ fontWeight: 600 }}>
+              Data de Vigência:{' '}
+              <Box component="span" sx={{ color: 'error.main' }}>
+                *
+              </Box>
+            </Typography>
             <TextField
-              label="Data de Vigência *"
               type="date"
               InputLabelProps={{ shrink: true }}
               value={deducaoForm.completedAt}
@@ -533,9 +586,12 @@ export default function Produtividade() {
                 }))
               }
             />
+            <Typography variant="body2" sx={{ fontWeight: 600 }}>
+              Quantidade:
+            </Typography>
             <TextField
-              label="Quantidade"
               type="number"
+              placeholder="0"
               value={deducaoForm.quantity}
               onChange={(event) =>
                 setDeducaoForm((prev) => ({
@@ -544,8 +600,11 @@ export default function Produtividade() {
                 }))
               }
             />
+            <Typography variant="body2" sx={{ fontWeight: 600 }}>
+              Justificativa:
+            </Typography>
             <TextField
-              label="Justificativa"
+              placeholder="Digite a justificativa"
               value={deducaoForm.notes}
               onChange={(event) =>
                 setDeducaoForm((prev) => ({
@@ -563,10 +622,11 @@ export default function Produtividade() {
           </Box>
         </Paper>
 
-        <Paper sx={{ p: 3, mt: 4 }}>
-          <Typography variant="h6" sx={{ mb: 2 }}>
+        <Paper sx={{ p: 3, mt: 4, borderRadius: 1.5, boxShadow: 2 }}>
+          <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
             Cadastro de Atividades
           </Typography>
+          <Divider sx={{ mb: 3 }} />
           <Box
             sx={{
               display: 'grid',
@@ -677,14 +737,14 @@ export default function Produtividade() {
               Atividades cadastradas
             </Typography>
             <Table size="small">
-              <TableHead>
+              <TableHead sx={{ bgcolor: '#f5f5f5' }}>
                 <TableRow>
-                  <TableCell>ID</TableCell>
-                  <TableCell>Tipo</TableCell>
-                  <TableCell>Tipo de Cálculo</TableCell>
-                  <TableCell>Pontos</TableCell>
-                  <TableCell>Ativo</TableCell>
-                  <TableCell>Opções</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>ID</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Tipo</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Tipo de Cálculo</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Pontos</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Ativo</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Opções</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
