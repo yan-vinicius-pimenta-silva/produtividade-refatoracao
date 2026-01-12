@@ -114,11 +114,115 @@ namespace Api.Data
             Console.WriteLine("Usuário root criado com sucesso.");
         }
 
+        public static async Task SeedAccessPermissionsAsync(ApiDbContext context)
+        {
+            if (await context.AccessPermissions.AnyAsync())
+                return;
+
+            var users = await context.Users.AsNoTracking().ToListAsync();
+            var resources = await context.SystemResources.AsNoTracking().ToListAsync();
+            if (!users.Any() || !resources.Any())
+                return;
+
+            var resourceByName = resources.ToDictionary(resource => resource.Name, resource => resource);
+            var permissions = new List<AccessPermission>();
+
+            foreach (var user in users)
+            {
+                if (resourceByName.TryGetValue("users", out var usersResource))
+                {
+                    permissions.Add(new AccessPermission
+                    {
+                        UserId = user.Id,
+                        SystemResourceId = usersResource.Id,
+                        CreatedAt = DateTime.UtcNow,
+                        UpdatedAt = DateTime.UtcNow
+                    });
+                }
+
+                if (resourceByName.TryGetValue("reports", out var reportsResource))
+                {
+                    permissions.Add(new AccessPermission
+                    {
+                        UserId = user.Id,
+                        SystemResourceId = reportsResource.Id,
+                        CreatedAt = DateTime.UtcNow,
+                        UpdatedAt = DateTime.UtcNow
+                    });
+                }
+            }
+
+            if (permissions.Count == 0)
+                return;
+
+            await context.AccessPermissions.AddRangeAsync(permissions);
+            await context.SaveChangesAsync();
+
+            Console.WriteLine("Seed de permissões de acesso executada.");
+        }
+
+        public static async Task SeedSystemLogsAsync(ApiDbContext context)
+        {
+            if (await context.SystemLogs.AnyAsync())
+                return;
+
+            var users = await context.Users.AsNoTracking().ToListAsync();
+            if (!users.Any())
+                return;
+
+            var baseDate = DateTime.UtcNow.AddDays(-7);
+            var logs = new List<SystemLog>
+            {
+                new SystemLog
+                {
+                    UserId = users[0].Id,
+                    Action = "Login efetuado",
+                    UsedPayload = "{\"ip\":\"127.0.0.1\"}",
+                    CreatedAt = baseDate.AddHours(2)
+                },
+                new SystemLog
+                {
+                    UserId = users[Math.Min(1, users.Count - 1)].Id,
+                    Action = "Atualização de perfil",
+                    UsedPayload = "{\"campo\":\"fullName\"}",
+                    CreatedAt = baseDate.AddHours(5)
+                },
+                new SystemLog
+                {
+                    UserId = users[Math.Min(2, users.Count - 1)].Id,
+                    Action = "Listagem de usuários",
+                    UsedPayload = "{\"pagina\":1,\"limite\":10}",
+                    CreatedAt = baseDate.AddDays(1).AddHours(3)
+                },
+                new SystemLog
+                {
+                    UserId = users[Math.Min(3, users.Count - 1)].Id,
+                    Action = "Criação de usuário",
+                    UsedPayload = "{\"username\":\"teste\"}",
+                    CreatedAt = baseDate.AddDays(2).AddHours(1)
+                },
+                new SystemLog
+                {
+                    UserId = users[Math.Min(4, users.Count - 1)].Id,
+                    Action = "Exportação de relatório",
+                    UsedPayload = "{\"tipo\":\"mensal\"}",
+                    CreatedAt = baseDate.AddDays(3).AddHours(4)
+                }
+            };
+
+            await context.SystemLogs.AddRangeAsync(logs);
+            await context.SaveChangesAsync();
+
+            Console.WriteLine("Seed de logs do sistema executada.");
+        }
+
         public static async Task SeedAllAsync(ApiDbContext context)
         {
             await SeedUsersAsync(context);
             await SeedSystemResourcesAsync(context);
             await CreateRootAsync(context);
+            await SeedAccessPermissionsAsync(context);
+            await SeedSystemLogsAsync(context);
         }
     }
 }
