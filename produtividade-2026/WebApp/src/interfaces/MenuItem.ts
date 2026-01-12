@@ -3,7 +3,8 @@ import type { ValidPermission } from '../permissions';
 
 export interface MenuItem {
   label: string;
-  route: string;
+  route?: string;
   icon: IconDefinition;
   permission?: ValidPermission;
+  children?: MenuItem[];
 }

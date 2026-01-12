@@ -1,5 +1,6 @@
 import {
   Box,
+  Collapse,
   Drawer,
   List,
   ListItem,
@@ -9,10 +10,11 @@ import {
   Tooltip,
 } from '@mui/material';
 import { useLocation } from 'react-router-dom';
+import { useState } from 'react';
 import AuthUserDisplay from '../AuthUserDisplay';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSignOutAlt } from '@fortawesome/free-solid-svg-icons';
 import { useAuth, usePermissions } from '../../hooks';
+import type { MenuItem } from '../../interfaces';
 
 interface SidePanelProps {
   open: boolean;
@@ -26,6 +28,9 @@ export default function SidePanel({ open, onNavigate }: SidePanelProps) {
   const { authUser, handleLogout } = useAuth();
   const { getMenuItemsForUser } = usePermissions();
   const location = useLocation();
+  const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>(
+    {}
+  );
 
   const drawerWidth = open ? DRAWER_OPEN : DRAWER_CLOSED;
 
@@ -60,68 +65,88 @@ export default function SidePanel({ open, onNavigate }: SidePanelProps) {
 
         <List>
           {filteredMenu.map((item) => {
-            const isActive = location.pathname === item.route;
+            const renderMenuItem = (menuItem: MenuItem, depth = 0) => {
+              const hasChildren = Boolean(menuItem.children?.length);
+              const isItemActive = (currentItem: MenuItem): boolean => {
+                if (currentItem.route) {
+                  return location.pathname === currentItem.route;
+                }
+                return (
+                  currentItem.children?.some((child) => isItemActive(child)) ??
+                  false
+                );
+              };
+              const active = isItemActive(menuItem);
+              const expanded =
+                expandedItems[menuItem.label] ?? (open && active);
 
-            return (
-              <ListItem key={item.label} disablePadding>
-                <Tooltip
-                  title={item.label}
-                  placement="right"
-                  arrow
-                  disableHoverListener={open}
-                >
-                  <ListItemButton
-                    onClick={() => onNavigate(item.route)}
-                    sx={{
-                      backgroundColor: isActive
-                        ? (theme) => `${theme.palette.primary.main}`
-                        : 'transparent',
-                    }}
-                  >
-                    <ListItemIcon>
-                      <FontAwesomeIcon icon={item.icon} />
-                    </ListItemIcon>
-                    <ListItemText
-                      primary={item.label}
-                      sx={{
-                        opacity: open ? 1 : 0,
-                        transition: 'opacity 0.3s',
-                        whiteSpace: 'nowrap',
-                      }}
-                    />
-                  </ListItemButton>
-                </Tooltip>
-              </ListItem>
-            );
-          })}
+              const handleClick = () => {
+                if (hasChildren) {
+                  if (!open) return;
+                  setExpandedItems((prev) => ({
+                    ...prev,
+                    [menuItem.label]: !expanded,
+                  }));
+                  return;
+                }
 
-          <ListItem disablePadding>
-            <Tooltip
-              title="Sair"
-              placement="right"
-              arrow
-              disableHoverListener={open}
-            >
-              <ListItemButton
-                onClick={() => {
+                if (!menuItem.route) return;
+                if (menuItem.route === '/logout') {
                   handleLogout();
                   onNavigate('/login');
-                }}
-              >
-                <ListItemIcon>
-                  <FontAwesomeIcon icon={faSignOutAlt} />
-                </ListItemIcon>
-                <ListItemText
-                  primary="Sair"
-                  sx={{
-                    opacity: open ? 1 : 0,
-                    transition: 'opacity 0.3s',
-                    whiteSpace: 'nowrap',
-                  }}
-                />
-              </ListItemButton>
-            </Tooltip>
-          </ListItem>
+                  return;
+                }
+
+                onNavigate(menuItem.route);
+              };
+
+              return (
+                <Box key={`${menuItem.label}-${depth}`}>
+                  <ListItem disablePadding>
+                    <Tooltip
+                      title={menuItem.label}
+                      placement="right"
+                      arrow
+                      disableHoverListener={open}
+                    >
+                      <ListItemButton
+                        onClick={handleClick}
+                        sx={{
+                          pl: open ? 2 + depth * 2 : 2,
+                          backgroundColor: active
+                            ? (theme) => `${theme.palette.primary.main}`
+                            : 'transparent',
+                        }}
+                      >
+                        <ListItemIcon>
+                          <FontAwesomeIcon icon={menuItem.icon} />
+                        </ListItemIcon>
+                        <ListItemText
+                          primary={menuItem.label}
+                          sx={{
+                            opacity: open ? 1 : 0,
+                            transition: 'opacity 0.3s',
+                            whiteSpace: 'nowrap',
+                          }}
+                        />
+                      </ListItemButton>
+                    </Tooltip>
+                  </ListItem>
+                  {hasChildren && (
+                    <Collapse in={open && expanded} timeout="auto" unmountOnExit>
+                      <List disablePadding>
+                        {menuItem.children?.map((child) =>
+                          renderMenuItem(child, depth + 1)
+                        )}
+                      </List>
+                    </Collapse>
+                  )}
+                </Box>
+              );
+            };
+
+            return renderMenuItem(item);
+          })}
         </List>
       </Box>
     </Drawer>
