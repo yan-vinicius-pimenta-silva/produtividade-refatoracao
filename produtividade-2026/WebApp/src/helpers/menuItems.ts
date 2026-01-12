@@ -36,7 +36,7 @@ export const menuItems: MenuItem[] = [
           {
             label: 'Consultar',
             icon: faClipboardList,
-            route: '/produtividade',
+            route: '/deducoes/consulta',
           },
         ],
       },

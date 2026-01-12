@@ -3,6 +3,7 @@ import ProtectedRoute from './ProtectedRoute';
 import {
   DashBoard,
   DeducaoCadastro,
+  DeducaoConsulta,
   Login,
   NotFound,
   PasswordReset,
@@ -33,6 +34,10 @@ const privateRoutes = [
   {
     path: '/deducoes/cadastro',
     element: <DeducaoCadastro />,
+  },
+  {
+    path: '/deducoes/consulta',
+    element: <DeducaoConsulta />,
   },
   {
     path: '/users',
