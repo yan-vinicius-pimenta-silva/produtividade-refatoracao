@@ -1,5 +1,6 @@
 export { default as DashBoard } from './DashBoard';
 export { default as DeducaoCadastro } from './DeducaoCadastro';
+export { default as DeducaoConsulta } from './DeducaoConsulta';
 export { default as Login } from './Login';
 export { default as NotFound } from './NotFound';
 export { default as PasswordReset } from './PasswordReset';
