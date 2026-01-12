@@ -11,14 +11,14 @@ import { PERMISSIONS } from '../permissions/tokens';
 
 export const menuItems: MenuItem[] = [
   {
-    label: 'Dashboard',
-    icon: faChartLine,
-    route: '/dashboard',
-  },
-  {
     label: 'Produtividade',
     icon: faClipboardList,
     children: [
+      {
+        label: 'Dashboard',
+        icon: faChartLine,
+        route: '/dashboard',
+      },
       {
         label: 'Home',
         icon: faChartLine,
@@ -71,24 +71,24 @@ export const menuItems: MenuItem[] = [
         icon: faSignOutAlt,
         route: '/logout',
       },
+      {
+        label: 'Usuários',
+        icon: faUsers,
+        route: '/users',
+        permission: PERMISSIONS.USERS,
+      },
+      {
+        label: 'Recursos',
+        icon: faCogs,
+        route: '/resources',
+        permission: PERMISSIONS.RESOURCES,
+      },
+      {
+        label: 'Relatórios',
+        icon: faChartBar,
+        route: '/reports',
+        permission: PERMISSIONS.REPORTS,
+      },
     ],
-  },
-  {
-    label: 'Usuários',
-    icon: faUsers,
-    route: '/users',
-    permission: PERMISSIONS.USERS,
-  },
-  {
-    label: 'Recursos',
-    icon: faCogs,
-    route: '/resources',
-    permission: PERMISSIONS.RESOURCES,
-  },
-  {
-    label: 'Relatórios',
-    icon: faChartBar,
-    route: '/reports',
-    permission: PERMISSIONS.REPORTS,
   },
 ];

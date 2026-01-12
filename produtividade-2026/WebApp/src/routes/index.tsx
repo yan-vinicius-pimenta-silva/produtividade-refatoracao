@@ -17,7 +17,6 @@ import { PERMISSIONS } from '../permissions';
 
 const publicRoutes = [
   { path: '/login', element: <Login /> },
-  { path: '/produtividade', element: <Produtividade /> },
   { path: '/password-reset', element: <PasswordReset /> },
 ];
 
