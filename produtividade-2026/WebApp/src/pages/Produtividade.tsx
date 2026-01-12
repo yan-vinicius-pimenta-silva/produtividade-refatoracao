@@ -1,15 +1,11 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   Box,
   Button,
   Checkbox,
+  Chip,
   Divider,
-  FormControl,
-  IconButton,
-  InputLabel,
-  MenuItem,
   Paper,
-  Select,
   Tab,
   Tabs,
   Table,
@@ -23,371 +19,189 @@ import {
 } from '@mui/material';
 import {
   CheckCircleOutline,
-  DeleteOutline,
-  Edit,
+  Description,
   FilterList,
-  FormatListBulleted,
   Refresh,
-  TaskAlt as TaskAltIcon,
   TaskAlt,
 } from '@mui/icons-material';
-import {
-  confirmFiscalActivities,
-  createFiscalActivity,
-  createProdutividadeActivity,
-  deleteFiscalActivity,
-  deleteProdutividadeActivity,
-  fetchFiscalActivities,
-  fetchProdutividadeActivities,
-  fetchProdutividadeActivityTypes,
-  fetchProdutividadeUsers,
-  updateProdutividadeActivity,
-} from '../services';
-import { useAuth, useNotification } from '../hooks';
-import type {
-  ProdutividadeActivity,
-  ProdutividadeActivityType,
-  ProdutividadeFiscalActivitySummary,
-  ProdutividadeUserSummary,
-} from '../interfaces';
-import { getErrorMessage } from '../helpers';
+
+type ActivityRow = {
+  id: number;
+  type: string;
+  date: string;
+  protocol: string;
+  document: string;
+  rc: string;
+  cpfCnpj: string;
+  points: number;
+  quantity: number;
+  value: number;
+  fiscal: string;
+  attachment: string;
+  notes: string;
+};
+
+const currencyFormatter = new Intl.NumberFormat('pt-BR', {
+  style: 'currency',
+  currency: 'BRL',
+});
 
 export default function Produtividade() {
-  const [activeTab, setActiveTab] = useState(0);
-  const [fiscalActivities, setFiscalActivities] = useState<
-    ProdutividadeFiscalActivitySummary[]
-  >([]);
-  const [selectedActivityIds, setSelectedActivityIds] = useState<number[]>([]);
-  const [activityCatalog, setActivityCatalog] = useState<ProdutividadeActivity[]>(
+  const [homeTab, setHomeTab] = useState(0);
+
+  const pendingActivities = useMemo<ActivityRow[]>(
+    () => [
+      {
+        id: 2868,
+        type: 'Auto de Infração - Imposição de Multa',
+        date: '08/01/2026',
+        protocol: '0955.560.0000115/2026',
+        document: '05269966',
+        rc: '11.6.06.30.043.000',
+        cpfCnpj: '12.625.069/0001-90',
+        points: 173.4,
+        quantity: 115.6,
+        value: 44424,
+        fiscal: 'Pedro de Melo',
+        attachment: 'AI-288.pdf',
+        notes: 'Fiscalização noturna em área central.',
+      },
+      {
+        id: 2871,
+        type: 'Taxa de Licença para Publicidade',
+        date: '09/01/2026',
+        protocol: '16138/2025',
+        document: '05270031',
+        rc: '--',
+        cpfCnpj: '16.670.085/1399-00',
+        points: 6,
+        quantity: 3,
+        value: 1156.42,
+        fiscal: 'Sisuley Zaniboni Gouveia',
+        attachment: 'LP-044.pdf',
+        notes: 'Publicidade em fachada principal.',
+      },
+      {
+        id: 2873,
+        type: 'Plantão Fiscal fora do horário (por hora)',
+        date: '10/01/2026',
+        protocol: '--',
+        document: '--',
+        rc: '--',
+        cpfCnpj: '--',
+        points: 7,
+        quantity: 3.5,
+        value: 0,
+        fiscal: 'Fernando Pagioro',
+        attachment: 'PL-179.pdf',
+        notes: 'Apoio na feira do parque ecológico.',
+      },
+      {
+        id: 2874,
+        type: 'Auto de Infração - Imposição de Multa',
+        date: '11/01/2026',
+        protocol: '18182/2023',
+        document: '05270090',
+        rc: '11.6.12.67.031.000',
+        cpfCnpj: '269.891.668-00',
+        points: 8.5,
+        quantity: 5.7,
+        value: 2221.2,
+        fiscal: 'Sisuley Zaniboni Gouveia',
+        attachment: 'AI-315.pdf',
+        notes: 'Não construiu a calçada conforme notificação.',
+      },
+    ],
     []
   );
-  const [activityTypes, setActivityTypes] = useState<ProdutividadeActivityType[]>(
+
+  const validatedActivities = useMemo<ActivityRow[]>(
+    () => [
+      {
+        id: 2810,
+        type: 'Taxa de Licença para Publicidade',
+        date: '02/01/2026',
+        protocol: '14220/2025',
+        document: '05269002',
+        rc: '--',
+        cpfCnpj: '93.209.765/0509-98',
+        points: 2.4,
+        quantity: 1.2,
+        value: 496.75,
+        fiscal: 'Sisuley Zaniboni Gouveia',
+        attachment: 'LP-010.pdf',
+        notes: 'Ponto de mídia em via arterial.',
+      },
+      {
+        id: 2814,
+        type: 'Auto de Infração - Imposição de Multa',
+        date: '03/01/2026',
+        protocol: '12055/2025',
+        document: '05269088',
+        rc: '12.5.19.23.014.000',
+        cpfCnpj: '145.861.848-09',
+        points: 40,
+        quantity: 26.7,
+        value: 10278,
+        fiscal: 'Pedro de Melo',
+        attachment: 'AI-241.pdf',
+        notes: 'Ocorrência validada pela chefia.',
+      },
+    ],
     []
   );
-  const [fiscais, setFiscais] = useState<ProdutividadeUserSummary[]>([]);
-  const [loadingActivities, setLoadingActivities] = useState(false);
-  const [loadingCatalog, setLoadingCatalog] = useState(false);
-  const [activityForm, setActivityForm] = useState({
-    id: null as number | null,
-    description: '',
-    points: '',
-    activityTypeId: '',
-    companyId: '',
-    isActive: true,
-    hasMultiplicator: false,
-    isOsActivity: false,
-  });
-  const [deducaoForm, setDeducaoForm] = useState({
-    activityId: '',
-    fiscalId: '',
-    completedAt: '',
-    notes: '',
-    quantity: '',
-  });
-
-  const { token } = useAuth();
-  const { showNotification } = useNotification();
-
-  const parsedToken = useMemo(() => {
-    if (!token) return null;
-    const parts = token.split('.');
-    if (parts.length < 2) return null;
-    try {
-      const decoded = JSON.parse(atob(parts[1]));
-      return decoded as Record<string, string>;
-    } catch {
-      return null;
-    }
-  }, [token]);
-
-  const defaultCompanyId = parsedToken?.companyId
-    ? Number(parsedToken.companyId)
-    : null;
-
-  const deductionActivities = useMemo(
-    () =>
-      activityCatalog.filter((activity) => activity.calculationType === 3),
-    [activityCatalog]
-  );
-
-  const calculationLabel = (value: number) => {
-    if (value === 1) return 'UFESP';
-    if (value === 2) return 'Pontuação';
-    if (value === 3) return 'Dedução';
-    return '-';
-  };
-
-  const fetchInitialData = async () => {
-    if (!token) return;
-    try {
-      const [types, catalog, users] = await Promise.all([
-        fetchProdutividadeActivityTypes(token),
-        fetchProdutividadeActivities(token, {
-          companyId: defaultCompanyId ?? undefined,
-        }),
-        fetchProdutividadeUsers(token, 2),
-      ]);
-      setActivityTypes(types);
-      setActivityCatalog(catalog);
-      setFiscais(users);
-    } catch (error) {
-      showNotification(getErrorMessage(error), 'error');
-    }
-  };
-
-  const loadFiscalActivities = async () => {
-    if (!token) return;
-    setLoadingActivities(true);
-    try {
-      const activities = await fetchFiscalActivities(token, {
-        companyId: defaultCompanyId ?? undefined,
-        validated: activeTab === 1,
-      });
-      setFiscalActivities(activities);
-      setSelectedActivityIds([]);
-    } catch (error) {
-      showNotification(getErrorMessage(error), 'error');
-    } finally {
-      setLoadingActivities(false);
-    }
-  };
-
-  const loadCatalog = async () => {
-    if (!token) return;
-    setLoadingCatalog(true);
-    try {
-      const catalog = await fetchProdutividadeActivities(token, {
-        companyId: defaultCompanyId ?? undefined,
-      });
-      setActivityCatalog(catalog);
-    } catch (error) {
-      showNotification(getErrorMessage(error), 'error');
-    } finally {
-      setLoadingCatalog(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchInitialData();
-  }, [token]);
-
-  useEffect(() => {
-    loadFiscalActivities();
-  }, [token, activeTab]);
-
-  useEffect(() => {
-    if (defaultCompanyId && !activityForm.companyId) {
-      setActivityForm((prev) => ({ ...prev, companyId: String(defaultCompanyId) }));
-    }
-  }, [defaultCompanyId, activityForm.companyId]);
-
-  const toggleSelectActivity = (activityId: number) => {
-    setSelectedActivityIds((prev) =>
-      prev.includes(activityId)
-        ? prev.filter((id) => id !== activityId)
-        : [...prev, activityId]
-    );
-  };
-
-  const handleConfirm = async () => {
-    if (!token) return;
-    if (selectedActivityIds.length === 0) {
-      showNotification('Selecione ao menos uma atividade para confirmar.', 'warning');
-      return;
-    }
-    try {
-      await confirmFiscalActivities(token, selectedActivityIds);
-      showNotification('Atividades confirmadas com sucesso.', 'success');
-      await loadFiscalActivities();
-    } catch (error) {
-      showNotification(getErrorMessage(error), 'error');
-    }
-  };
-
-  const handleDeleteFiscalActivity = async (activityId: number) => {
-    if (!token) return;
-    try {
-      await deleteFiscalActivity(token, activityId);
-      showNotification('Atividade excluída com sucesso.', 'success');
-      await loadFiscalActivities();
-    } catch (error) {
-      showNotification(getErrorMessage(error), 'error');
-    }
-  };
-
-  const handleSaveCatalogActivity = async () => {
-    if (!token) return;
-    const parsedPoints = Number(activityForm.points);
-    const parsedActivityTypeId = Number(activityForm.activityTypeId);
-    const parsedCompanyId = Number(activityForm.companyId || defaultCompanyId || 0);
-
-    if (!activityForm.description || !parsedPoints || !parsedActivityTypeId) {
-      showNotification('Preencha os campos obrigatórios da atividade.', 'warning');
-      return;
-    }
-
-    const payload = {
-      description: activityForm.description,
-      points: parsedPoints,
-      isActive: activityForm.isActive,
-      hasMultiplicator: activityForm.hasMultiplicator,
-      isOsActivity: activityForm.isOsActivity,
-      activityTypeId: parsedActivityTypeId,
-      companyId: parsedCompanyId,
-    };
-
-    try {
-      if (activityForm.id) {
-        await updateProdutividadeActivity(token, activityForm.id, payload);
-        showNotification('Atividade atualizada com sucesso.', 'success');
-      } else {
-        await createProdutividadeActivity(token, payload);
-        showNotification('Atividade cadastrada com sucesso.', 'success');
-      }
-      setActivityForm({
-        id: null,
-        description: '',
-        points: '',
-        activityTypeId: '',
-        companyId: parsedCompanyId ? String(parsedCompanyId) : '',
-        isActive: true,
-        hasMultiplicator: false,
-        isOsActivity: false,
-      });
-      await loadCatalog();
-    } catch (error) {
-      showNotification(getErrorMessage(error), 'error');
-    }
-  };
-
-  const handleEditCatalog = (activity: ProdutividadeActivity) => {
-    setActivityForm({
-      id: activity.id,
-      description: activity.description,
-      points: String(activity.points),
-      activityTypeId: String(activity.activityTypeId),
-      companyId: String(activity.companyId),
-      isActive: activity.isActive,
-      hasMultiplicator: activity.hasMultiplicator,
-      isOsActivity: activity.isOsActivity,
-    });
-  };
-
-  const handleDeleteCatalog = async (activityId: number) => {
-    if (!token) return;
-    try {
-      await deleteProdutividadeActivity(token, activityId);
-      showNotification('Atividade removida com sucesso.', 'success');
-      await loadCatalog();
-    } catch (error) {
-      showNotification(getErrorMessage(error), 'error');
-    }
-  };
-
-  const handleCreateDeducao = async () => {
-    if (!token) return;
-    const activityId = Number(deducaoForm.activityId);
-    const fiscalId = Number(deducaoForm.fiscalId);
-    const quantity = deducaoForm.quantity ? Number(deducaoForm.quantity) : undefined;
-
-    if (!activityId || !fiscalId || !deducaoForm.completedAt) {
-      showNotification('Preencha os campos obrigatórios da dedução.', 'warning');
-      return;
-    }
-
-    try {
-      await createFiscalActivity(
-        {
-          activityId,
-          fiscalId,
-          companyId: defaultCompanyId ?? 0,
-          completedAt: deducaoForm.completedAt,
-          document: null,
-          protocol: null,
-          cpfCnpj: null,
-          rc: null,
-          value: null,
-          quantity: quantity ?? null,
-          notes: deducaoForm.notes || null,
-          attachments: [],
-        },
-        token
-      );
-      showNotification('Dedução cadastrada com sucesso.', 'success');
-      setDeducaoForm({
-        activityId: '',
-        fiscalId: '',
-        completedAt: '',
-        notes: '',
-        quantity: '',
-      });
-      await loadFiscalActivities();
-    } catch (error) {
-      showNotification(getErrorMessage(error), 'error');
-    }
-  };
 
   return (
-    <Box sx={{ bgcolor: '#ececec', minHeight: '100vh', pb: 6 }}>
+    <Box sx={{ bgcolor: '#f6f7fb', minHeight: '100vh', pb: 6 }}>
       <Box
         sx={{
-          bgcolor: '#009688',
+          px: { xs: 2.5, md: 4 },
+          py: 4,
+          background: 'linear-gradient(120deg, #0f766e 0%, #059669 100%)',
           color: '#fff',
-          px: { xs: 2, md: 4 },
-          py: 2.5,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
         }}
       >
-        <Typography variant="subtitle1" sx={{ fontWeight: 600, letterSpacing: 0.3 }}>
-          FISCALIZAÇÃO URBANA - PRODUTIVIDADE
+        <Typography variant="overline" sx={{ letterSpacing: 1 }}>
+          Fiscalização Urbana
         </Typography>
-        <Button
-          variant="text"
-          sx={{ color: '#fff', fontWeight: 600 }}
-          startIcon={<CheckCircleOutline />}
-        >
-          SAIR
-        </Button>
+        <Typography variant="h4" sx={{ fontWeight: 700, mb: 1 }}>
+          Produtividade & Validação Financeira
+        </Typography>
+        <Typography variant="body1" sx={{ maxWidth: 760 }}>
+          Central operacional para validação de atividades, gestão de deduções e
+          administração legal da produtividade. Use dados fictícios para testar
+          fluxos antes de integrar com a base oficial.
+        </Typography>
       </Box>
 
-      <Box sx={{ px: { xs: 2, md: 4 }, mt: -3 }}>
-        <Paper sx={{ p: 3, borderRadius: 1.5, boxShadow: 2 }}>
+      <Box sx={{ px: { xs: 2.5, md: 4 }, mt: -4 }}>
+        <Paper sx={{ mt: 3, p: 3, borderRadius: 3, boxShadow: 3 }}>
+          <Typography variant="h6" sx={{ fontWeight: 700 }}>
+            Central de Apuração
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+            Valide as atividades lançadas pelos fiscais antes de liberar o cálculo
+            financeiro. Atividades validadas ficam bloqueadas para edição.
+          </Typography>
+
           <Tabs
-            value={activeTab}
-            onChange={(_, value) => setActiveTab(value)}
+            value={homeTab}
+            onChange={(_, value) => setHomeTab(value)}
             textColor="primary"
             indicatorColor="primary"
-            sx={{
-              '& .MuiTab-root': {
-                fontWeight: 600,
-                minHeight: 48,
-                textTransform: 'none',
-              },
-            }}
+            sx={{ mt: 3, '& .MuiTab-root': { textTransform: 'none' } }}
           >
-            <Tab
-              label="ATIVIDADES A VALIDAR"
-              icon={<FormatListBulleted fontSize="small" />}
-              iconPosition="start"
-            />
-            <Tab
-              label="VALIDADAS"
-              icon={<TaskAltIcon fontSize="small" />}
-              iconPosition="start"
-            />
+            <Tab label="Atividades a validar" />
+            <Tab label="Validadas" />
           </Tabs>
 
-          <Divider sx={{ mt: 1, mb: 2 }} />
+          <Divider sx={{ my: 2 }} />
 
           <Box
             sx={{
               display: 'flex',
               flexWrap: 'wrap',
               gap: 1.5,
-              alignItems: 'center',
               justifyContent: 'space-between',
             }}
           >
@@ -403,378 +217,87 @@ export default function Produtividade() {
               </Button>
             </Box>
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5 }}>
-              <Button
-                variant="contained"
-                color="success"
-                startIcon={<TaskAlt />}
-                onClick={handleConfirm}
-                disabled={!selectedActivityIds.length}
-              >
+              <Button variant="contained" color="success" startIcon={<TaskAlt />}>
                 Confirmar
               </Button>
-              <Button
-                variant="contained"
-                color="success"
-                startIcon={<Refresh />}
-                onClick={loadFiscalActivities}
-                disabled={loadingActivities}
-              >
+              <Button variant="contained" color="success" startIcon={<Refresh />}>
                 Atualizar
               </Button>
             </Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-              <Button variant="text" startIcon={<FilterList />} sx={{ color: '#424242' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Button variant="text" startIcon={<FilterList />}>
                 Filtrar
               </Button>
-              <TextField
-                label="Pesquisar"
-                variant="standard"
-                sx={{ minWidth: 220 }}
-              />
+              <TextField label="Pesquisar" variant="standard" sx={{ minWidth: 200 }} />
             </Box>
           </Box>
 
-          <TableContainer
-            sx={{
-              mt: 3,
-              borderRadius: 1,
-              border: '1px solid #e0e0e0',
-            }}
-          >
+          <TableContainer sx={{ mt: 3, borderRadius: 2, border: '1px solid #e0e0e0' }}>
             <Table size="small">
-              <TableHead sx={{ bgcolor: '#f5f5f5' }}>
+              <TableHead sx={{ bgcolor: '#f3f4f6' }}>
                 <TableRow>
-                  <TableCell padding="checkbox" sx={{ fontWeight: 600 }} />
-                  <TableCell sx={{ fontWeight: 600 }}>ID</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    {homeTab === 0 ? 'Validar' : 'Status'}
+                  </TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>Tipo</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>Data</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>N° protocolo</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>N° documento</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Protocolo</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Documento</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>RC</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>CPF/CNPJ</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>Pontos</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>Quantidade</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Valor</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Valor (R$)</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>Fiscal</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Observação</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Opções</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Documento anexo</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Observações</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
-                {fiscalActivities.map((row) => (
-                  <TableRow key={row.id}>
-                    <TableCell padding="checkbox">
-                      <Checkbox
-                        checked={selectedActivityIds.includes(row.id)}
-                        onChange={() => toggleSelectActivity(row.id)}
-                      />
-                    </TableCell>
-                    <TableCell>{row.id}</TableCell>
-                    <TableCell>{row.activityName}</TableCell>
-                    <TableCell>
-                      {row.completedAt
-                        ? new Date(row.completedAt).toLocaleDateString()
-                        : '--'}
-                    </TableCell>
-                    <TableCell>{row.protocol ?? '--'}</TableCell>
-                    <TableCell>{row.document ?? '--'}</TableCell>
-                    <TableCell>{row.rc ?? '--'}</TableCell>
-                    <TableCell>{row.cpfCnpj ?? '--'}</TableCell>
-                    <TableCell>{row.totalPoints ?? 0}</TableCell>
-                    <TableCell>{row.quantity ?? 0}</TableCell>
-                    <TableCell>
-                      {row.value ? row.value.toLocaleString('pt-BR') : '--'}
-                    </TableCell>
-                    <TableCell>{row.fiscalName}</TableCell>
-                    <TableCell>{row.notes ?? '--'}</TableCell>
-                    <TableCell>
-                      <IconButton
-                        color="error"
-                        onClick={() => handleDeleteFiscalActivity(row.id)}
-                      >
-                        <DeleteOutline fontSize="small" />
-                      </IconButton>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {(homeTab === 0 ? pendingActivities : validatedActivities).map(
+                  (row) => (
+                    <TableRow key={row.id}>
+                      <TableCell>
+                        {homeTab === 0 ? (
+                          <Checkbox
+                            inputProps={{
+                              'aria-label': `Selecionar atividade ${row.id}`,
+                            }}
+                          />
+                        ) : (
+                          <Chip
+                            icon={<CheckCircleOutline />}
+                            label="Validada"
+                            color="success"
+                            size="small"
+                          />
+                        )}
+                      </TableCell>
+                      <TableCell>{row.type}</TableCell>
+                      <TableCell>{row.date}</TableCell>
+                      <TableCell>{row.protocol}</TableCell>
+                      <TableCell>{row.document}</TableCell>
+                      <TableCell>{row.rc}</TableCell>
+                      <TableCell>{row.cpfCnpj}</TableCell>
+                      <TableCell>{row.points}</TableCell>
+                      <TableCell>{row.quantity}</TableCell>
+                      <TableCell>{currencyFormatter.format(row.value)}</TableCell>
+                      <TableCell>{row.fiscal}</TableCell>
+                      <TableCell>
+                        <Chip
+                          icon={<Description />}
+                          label={row.attachment}
+                          variant="outlined"
+                          size="small"
+                        />
+                      </TableCell>
+                      <TableCell>{row.notes}</TableCell>
+                    </TableRow>
+                  )
+                )}
               </TableBody>
             </Table>
           </TableContainer>
-        </Paper>
-
-        <Paper sx={{ p: 3, mt: 4, borderRadius: 1.5, boxShadow: 2 }}>
-          <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-            Cadastrar Dedução
-          </Typography>
-          <Divider sx={{ mb: 3 }} />
-          <Box
-            sx={{
-              display: 'grid',
-              gridTemplateColumns: { xs: '1fr', md: '180px 1fr' },
-              gap: 2.5,
-              alignItems: 'center',
-            }}
-          >
-            <Typography variant="body2" sx={{ fontWeight: 600 }}>
-              Dedução: <Box component="span" sx={{ color: 'error.main' }}>*</Box>
-            </Typography>
-            <FormControl>
-              <Select
-                displayEmpty
-                value={deducaoForm.activityId}
-                onChange={(event) =>
-                  setDeducaoForm((prev) => ({
-                    ...prev,
-                    activityId: String(event.target.value),
-                  }))
-                }
-                renderValue={(selected) =>
-                  selected ? selected : <em>Escolha...</em>
-                }
-              >
-                <MenuItem value="">
-                  <em>Escolha...</em>
-                </MenuItem>
-                {deductionActivities.map((activity) => (
-                  <MenuItem key={activity.id} value={activity.id}>
-                    {activity.description}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            <Typography variant="body2" sx={{ fontWeight: 600 }}>
-              Fiscal: <Box component="span" sx={{ color: 'error.main' }}>*</Box>
-            </Typography>
-            <FormControl>
-              <Select
-                displayEmpty
-                value={deducaoForm.fiscalId}
-                onChange={(event) =>
-                  setDeducaoForm((prev) => ({
-                    ...prev,
-                    fiscalId: String(event.target.value),
-                  }))
-                }
-                renderValue={(selected) =>
-                  selected ? selected : <em>Escolha...</em>
-                }
-              >
-                <MenuItem value="">
-                  <em>Escolha...</em>
-                </MenuItem>
-                {fiscais.map((fiscal) => (
-                  <MenuItem key={fiscal.id} value={fiscal.id}>
-                    {fiscal.name}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            <Typography variant="body2" sx={{ fontWeight: 600 }}>
-              Data de Vigência:{' '}
-              <Box component="span" sx={{ color: 'error.main' }}>
-                *
-              </Box>
-            </Typography>
-            <TextField
-              type="date"
-              InputLabelProps={{ shrink: true }}
-              value={deducaoForm.completedAt}
-              onChange={(event) =>
-                setDeducaoForm((prev) => ({
-                  ...prev,
-                  completedAt: event.target.value,
-                }))
-              }
-            />
-            <Typography variant="body2" sx={{ fontWeight: 600 }}>
-              Quantidade:
-            </Typography>
-            <TextField
-              type="number"
-              placeholder="0"
-              value={deducaoForm.quantity}
-              onChange={(event) =>
-                setDeducaoForm((prev) => ({
-                  ...prev,
-                  quantity: event.target.value,
-                }))
-              }
-            />
-            <Typography variant="body2" sx={{ fontWeight: 600 }}>
-              Justificativa:
-            </Typography>
-            <TextField
-              placeholder="Digite a justificativa"
-              value={deducaoForm.notes}
-              onChange={(event) =>
-                setDeducaoForm((prev) => ({
-                  ...prev,
-                  notes: event.target.value,
-                }))
-              }
-            />
-          </Box>
-          <Box sx={{ mt: 3, display: 'flex', gap: 2 }}>
-            <Button variant="contained" color="warning" onClick={handleCreateDeducao}>
-              Cadastrar
-            </Button>
-            <Button variant="outlined">Voltar</Button>
-          </Box>
-        </Paper>
-
-        <Paper sx={{ p: 3, mt: 4, borderRadius: 1.5, boxShadow: 2 }}>
-          <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-            Cadastro de Atividades
-          </Typography>
-          <Divider sx={{ mb: 3 }} />
-          <Box
-            sx={{
-              display: 'grid',
-              gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
-              gap: 2,
-              maxWidth: 720,
-            }}
-          >
-            <TextField
-              label="Nome *"
-              placeholder="Nome da atividade"
-              value={activityForm.description}
-              onChange={(event) =>
-                setActivityForm((prev) => ({
-                  ...prev,
-                  description: event.target.value,
-                }))
-              }
-            />
-            <TextField
-              label="Pontos *"
-              type="number"
-              placeholder="1.0"
-              value={activityForm.points}
-              onChange={(event) =>
-                setActivityForm((prev) => ({ ...prev, points: event.target.value }))
-              }
-            />
-            <FormControl>
-              <InputLabel id="atividade-tipo-label">
-                Tipo de Contabilização *
-              </InputLabel>
-              <Select
-                labelId="atividade-tipo-label"
-                label="Tipo de Contabilização *"
-                value={activityForm.activityTypeId}
-                onChange={(event) =>
-                  setActivityForm((prev) => ({
-                    ...prev,
-                    activityTypeId: String(event.target.value),
-                  }))
-                }
-              >
-                {activityTypes.map((type) => (
-                  <MenuItem key={type.id} value={type.id}>
-                    {type.name}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            <TextField
-              label="Empresa (ID)"
-              type="number"
-              value={activityForm.companyId}
-              onChange={(event) =>
-                setActivityForm((prev) => ({
-                  ...prev,
-                  companyId: event.target.value,
-                }))
-              }
-            />
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Checkbox
-                checked={activityForm.isActive}
-                onChange={(event) =>
-                  setActivityForm((prev) => ({
-                    ...prev,
-                    isActive: event.target.checked,
-                  }))
-                }
-              />
-              <Typography variant="body2">Ativo</Typography>
-            </Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Checkbox
-                checked={activityForm.hasMultiplicator}
-                onChange={(event) =>
-                  setActivityForm((prev) => ({
-                    ...prev,
-                    hasMultiplicator: event.target.checked,
-                  }))
-                }
-              />
-              <Typography variant="body2">Aceita multiplicador</Typography>
-            </Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Checkbox
-                checked={activityForm.isOsActivity}
-                onChange={(event) =>
-                  setActivityForm((prev) => ({
-                    ...prev,
-                    isOsActivity: event.target.checked,
-                  }))
-                }
-              />
-              <Typography variant="body2">Atividade OS</Typography>
-            </Box>
-          </Box>
-          <Box sx={{ mt: 3, display: 'flex', gap: 2 }}>
-            <Button variant="contained" color="warning" onClick={handleSaveCatalogActivity}>
-              {activityForm.id ? 'Atualizar' : 'Cadastrar'}
-            </Button>
-            <Button variant="outlined">Voltar</Button>
-          </Box>
-
-          <Paper variant="outlined" sx={{ mt: 4, p: 2 }}>
-            <Typography variant="subtitle1" sx={{ mb: 2 }}>
-              Atividades cadastradas
-            </Typography>
-            <Table size="small">
-              <TableHead sx={{ bgcolor: '#f5f5f5' }}>
-                <TableRow>
-                  <TableCell sx={{ fontWeight: 600 }}>ID</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Tipo</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Tipo de Cálculo</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Pontos</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Ativo</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Opções</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {activityCatalog.map((activity) => (
-                  <TableRow key={activity.id}>
-                    <TableCell>{activity.id}</TableCell>
-                    <TableCell>{activity.description}</TableCell>
-                    <TableCell>{calculationLabel(activity.calculationType)}</TableCell>
-                    <TableCell>{activity.points}</TableCell>
-                    <TableCell>{activity.isActive ? '✔' : '--'}</TableCell>
-                    <TableCell>
-                      <IconButton
-                        color="primary"
-                        onClick={() => handleEditCatalog(activity)}
-                      >
-                        <Edit fontSize="small" />
-                      </IconButton>
-                      <IconButton
-                        color="error"
-                        onClick={() => handleDeleteCatalog(activity.id)}
-                        disabled={loadingCatalog}
-                      >
-                        <DeleteOutline fontSize="small" />
-                      </IconButton>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </Paper>
         </Paper>
       </Box>
     </Box>
