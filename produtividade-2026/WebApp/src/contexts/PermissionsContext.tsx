@@ -54,13 +54,33 @@ export function PermissionsProvider({ children }: { children: ReactNode }) {
 
   const pageTitleIcons = getPageTitleIcons(menuItems);
 
+  const filterMenuItems = (
+    items: MenuItem[],
+    authUser: AuthUser | null
+  ): MenuItem[] => {
+    return items.reduce<MenuItem[]>((acc, item) => {
+      if (item.permission) {
+        if (!authUser) return acc;
+        if (!isRootUser(authUser) && !hasPermission(authUser, item.permission)) {
+          return acc;
+        }
+      }
+
+      const children = item.children
+        ? filterMenuItems(item.children, authUser)
+        : undefined;
+
+      acc.push({
+        ...item,
+        children: children && children.length > 0 ? children : undefined,
+      });
+
+      return acc;
+    }, []);
+  };
+
   const getMenuItemsForUser = (authUser: AuthUser | null): MenuItem[] => {
-    return menuItems.filter((item) => {
-      if (!item.permission) return true;
-      if (!authUser) return false;
-      if (isRootUser(authUser)) return true;
-      return hasPermission(authUser, item.permission);
-    });
+    return filterMenuItems(menuItems, authUser);
   };
 
   useEffect(() => {

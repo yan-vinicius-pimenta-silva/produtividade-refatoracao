@@ -3,6 +3,7 @@ import {
   faChartLine,
   faCogs,
   faClipboardList,
+  faSignOutAlt,
   faUsers,
 } from '@fortawesome/free-solid-svg-icons';
 import type { MenuItem } from '../interfaces';
@@ -17,7 +18,60 @@ export const menuItems: MenuItem[] = [
   {
     label: 'Produtividade',
     icon: faClipboardList,
-    route: '/produtividade',
+    children: [
+      {
+        label: 'Home',
+        icon: faChartLine,
+        route: '/produtividade',
+      },
+      {
+        label: 'Deduções',
+        icon: faClipboardList,
+        children: [
+          {
+            label: 'Cadastrar',
+            icon: faClipboardList,
+            route: '/produtividade',
+          },
+          {
+            label: 'Consultar',
+            icon: faClipboardList,
+            route: '/produtividade',
+          },
+        ],
+      },
+      {
+        label: 'Histórico',
+        icon: faChartBar,
+        route: '/produtividade',
+      },
+      {
+        label: 'Parâmetros',
+        icon: faCogs,
+        children: [
+          {
+            label: 'Atividades',
+            icon: faCogs,
+            route: '/produtividade',
+          },
+          {
+            label: 'Unidade fiscal',
+            icon: faCogs,
+            route: '/produtividade',
+          },
+        ],
+      },
+      {
+        label: 'Lixeira',
+        icon: faChartBar,
+        route: '/produtividade',
+      },
+      {
+        label: 'Sair',
+        icon: faSignOutAlt,
+        route: '/logout',
+      },
+    ],
   },
   {
     label: 'Usuários',
