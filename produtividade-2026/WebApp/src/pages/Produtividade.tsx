@@ -2,6 +2,8 @@ import { useMemo, useState } from 'react';
 import {
   Box,
   Button,
+  Card,
+  CardContent,
   Checkbox,
   Chip,
   Divider,
@@ -194,6 +196,7 @@ export default function Produtividade() {
             <Tab label="Atividades a validar" />
             <Tab label="Validadas" />
           </Tabs>
+        </Paper>
 
           <Divider sx={{ my: 2 }} />
 
@@ -230,7 +233,6 @@ export default function Produtividade() {
               </Button>
               <TextField label="Pesquisar" variant="standard" sx={{ minWidth: 200 }} />
             </Box>
-          </Box>
 
           <TableContainer sx={{ mt: 3, borderRadius: 2, border: '1px solid #e0e0e0' }}>
             <Table size="small">
