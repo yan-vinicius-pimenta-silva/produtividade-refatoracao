@@ -2,8 +2,6 @@ import { useMemo, useState } from 'react';
 import {
   Box,
   Button,
-  Card,
-  CardContent,
   Checkbox,
   Chip,
   Divider,
@@ -186,21 +184,20 @@ export default function Produtividade() {
             financeiro. Atividades validadas ficam bloqueadas para edição.
           </Typography>
 
-          <Tabs
-            value={homeTab}
-            onChange={(_, value) => setHomeTab(value)}
-            textColor="primary"
-            indicatorColor="primary"
-            sx={{ mt: 3, '& .MuiTab-root': { textTransform: 'none' } }}
-          >
-            <Tab label="Atividades a validar" />
-            <Tab label="Validadas" />
-          </Tabs>
-        </Paper>
+        <Tabs
+          value={homeTab}
+          onChange={(_, value) => setHomeTab(value)}
+          textColor="primary"
+          indicatorColor="primary"
+          sx={{ mt: 3, '& .MuiTab-root': { textTransform: 'none' } }}
+        >
+          <Tab label="Atividades a validar" />
+          <Tab label="Validadas" />
+        </Tabs>
 
-          <Divider sx={{ my: 2 }} />
+        <Divider sx={{ my: 2 }} />
 
-          <Box
+        <Box
             sx={{
               display: 'flex',
               flexWrap: 'wrap',
@@ -233,6 +230,8 @@ export default function Produtividade() {
               </Button>
               <TextField label="Pesquisar" variant="standard" sx={{ minWidth: 200 }} />
             </Box>
+
+          </Box>
 
           <TableContainer sx={{ mt: 3, borderRadius: 2, border: '1px solid #e0e0e0' }}>
             <Table size="small">

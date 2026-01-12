@@ -20,7 +20,7 @@ services:
     depends_on:
       - db
     ports:
-      - '5209:5209' # ajuste conforme a porta da sua API
+      - '5209:5209' 
     restart: always
 
   webapp:
