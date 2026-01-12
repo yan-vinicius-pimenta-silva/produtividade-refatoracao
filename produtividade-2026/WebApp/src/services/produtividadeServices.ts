@@ -9,7 +9,9 @@ import type {
   ProdutividadeUserSummary,
 } from '../interfaces';
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5209/api';
+import { resolveApiBaseUrl } from '../api/baseUrl';
+
+const API_BASE = resolveApiBaseUrl(import.meta.env.VITE_API_BASE_URL);
 
 async function handleResponse<T>(response: Response, errorMessage: string): Promise<T> {
   if (!response.ok) {
