@@ -6,6 +6,7 @@ import {
   DeducaoConsulta,
   Login,
   NotFound,
+  ParametrosAtividades,
   PasswordReset,
   Produtividade,
   Reports,
@@ -38,6 +39,10 @@ const privateRoutes = [
   {
     path: '/deducoes/consulta',
     element: <DeducaoConsulta />,
+  },
+  {
+    path: '/parametros/atividades',
+    element: <ParametrosAtividades />,
   },
   {
     path: '/users',

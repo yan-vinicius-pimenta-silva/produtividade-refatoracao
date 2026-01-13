@@ -1,7 +1,10 @@
 export { default as DashBoard } from './Home';
+export { default as DeducaoCadastro } from './Deducoes/Cadastro';
+export { default as DeducaoConsulta } from './Deducoes/Consulta';
 export { default as Login } from './Login';
 export { default as NotFound } from './NotFound';
 export { default as PasswordReset } from './PasswordReset';
+export { default as ParametrosAtividades } from './Parametros/Atividades';
 export { default as Produtividade } from './Produtividade';
 export { default as Reports } from './Reports';
 export { default as Resources } from './Resources';

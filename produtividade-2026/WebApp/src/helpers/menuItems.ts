@@ -52,7 +52,7 @@ export const menuItems: MenuItem[] = [
           {
             label: 'Atividades',
             icon: faCogs,
-            route: '/produtividade',
+            route: '/parametros/atividades',
           },
           {
             label: 'Unidade fiscal',
