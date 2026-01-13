@@ -2,6 +2,8 @@ import { createBrowserRouter } from 'react-router-dom';
 import ProtectedRoute from './ProtectedRoute';
 import {
   DashBoard,
+  DeducaoCadastro,
+  DeducaoConsulta,
   Login,
   NotFound,
   PasswordReset,
@@ -28,6 +30,14 @@ const privateRoutes = [
   {
     path: '/produtividade',
     element: <Produtividade />,
+  },
+  {
+    path: '/deducoes/cadastro',
+    element: <DeducaoCadastro />,
+  },
+  {
+    path: '/deducoes/consulta',
+    element: <DeducaoConsulta />,
   },
   {
     path: '/users',

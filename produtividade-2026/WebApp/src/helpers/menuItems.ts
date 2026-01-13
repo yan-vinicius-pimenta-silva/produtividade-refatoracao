@@ -31,12 +31,12 @@ export const menuItems: MenuItem[] = [
           {
             label: 'Cadastrar',
             icon: faClipboardList,
-            route: '/produtividade',
+            route: '/deducoes/cadastro',
           },
           {
             label: 'Consultar',
             icon: faClipboardList,
-            route: '/produtividade',
+            route: '/deducoes/consulta',
           },
         ],
       },
