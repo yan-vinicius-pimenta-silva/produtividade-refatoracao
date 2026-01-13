@@ -6,6 +6,8 @@ import {
   DeducaoConsulta,
   Login,
   NotFound,
+  ParametrosAtividades,
+  ParametrosUnidadeFiscal,
   PasswordReset,
   Produtividade,
   Reports,
@@ -38,6 +40,14 @@ const privateRoutes = [
   {
     path: '/deducoes/consulta',
     element: <DeducaoConsulta />,
+  },
+  {
+    path: '/parametros/atividades',
+    element: <ParametrosAtividades />,
+  },
+  {
+    path: '/parametros/ufesp',
+    element: <ParametrosUnidadeFiscal />,
   },
   {
     path: '/users',
