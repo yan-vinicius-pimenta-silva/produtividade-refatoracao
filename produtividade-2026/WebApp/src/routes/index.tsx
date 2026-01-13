@@ -2,12 +2,8 @@ import { createBrowserRouter } from 'react-router-dom';
 import ProtectedRoute from './ProtectedRoute';
 import {
   DashBoard,
-  DeducaoCadastro,
-  DeducaoConsulta,
   Login,
   NotFound,
-  ParametrosAtividades,
-  ParametrosUnidadeFiscal,
   PasswordReset,
   Produtividade,
   Reports,
@@ -18,6 +14,10 @@ import {
 import { CleanLayout, DefaultLayout } from '../layouts';
 import { UsersProvider } from '../contexts';
 import { PERMISSIONS } from '../permissions';
+import DeducaoCadastro from "../pages/Deducoes/Cadastro";
+import DeducaoConsulta from "../pages/Deducoes/Consulta";
+import ParametrosAtividades from "../pages/Parametros/Atividades";
+import  ParametrosUnidadeFiscal from "../pages/Parametros/UnidadeFiscal";
 
 const publicRoutes = [
   { path: '/login', element: <Login /> },
@@ -46,7 +46,7 @@ const privateRoutes = [
     element: <ParametrosAtividades />,
   },
   {
-    path: '/parametros/ufesp',
+    path: '/parametros/UnidadeFiscal',
     element: <ParametrosUnidadeFiscal />,
   },
   {
