@@ -15,6 +15,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  TableSortLabel,
   TextField,
   Typography,
 } from '@mui/material';
@@ -26,7 +27,7 @@ const columns = ['ID', 'Tipo', 'Tipo de Cálculo', 'Pontos', 'Ativo', 'Opções'
 export default function ParametrosAtividades() {
   const [nome, setNome] = useState('');
   const [descricao, setDescricao] = useState('');
-  const [pontos, setPontos] = useState('1.0');
+  const [pontos, setPontos] = useState('');
   const [tipoContabilizacao, setTipoContabilizacao] = useState('');
   const [ativo, setAtivo] = useState(false);
   const [aceitaMultiplicador, setAceitaMultiplicador] = useState(false);
@@ -36,15 +37,16 @@ export default function ParametrosAtividades() {
 
   return (
     <Box sx={{ bgcolor: '#f6f7fb', minHeight: '100vh', py: 4, px: { xs: 2, md: 4 } }}>
-      <Card sx={{ borderRadius: 3, boxShadow: 3, mb: 4 }}>
+      <Card sx={{ borderRadius: 2, boxShadow: 3, mb: 4 }}>
         <CardContent sx={{ p: { xs: 3, md: 4 } }}>
-          <Typography variant="h6" sx={{ fontWeight: 700, mb: 1, textTransform: 'uppercase' }}>
+          <Typography variant="h6" sx={{ fontWeight: 700, mb: 2, textTransform: 'uppercase' }}>
             Cadastro de atividades
           </Typography>
           <Divider sx={{ mb: 3 }} />
 
-          <Grid container spacing={3}>
-            <Grid item xs={12} md={3}>
+          <Box sx={{ maxWidth: 900, mx: 'auto' }}>
+            <Grid container spacing={3} alignItems="center" justifyContent="center">
+              <Grid item xs={12} md={3} sx={{ textAlign: { md: 'right' } }}>
               <Typography
                 component="label"
                 htmlFor="atividade-nome"
@@ -55,8 +57,8 @@ export default function ParametrosAtividades() {
                   *
                 </Box>
               </Typography>
-            </Grid>
-            <Grid item xs={12} md={9}>
+              </Grid>
+              <Grid item xs={12} md={7}>
               <TextField
                 id="atividade-nome"
                 fullWidth
@@ -66,9 +68,9 @@ export default function ParametrosAtividades() {
                 variant="standard"
                 placeholder="Nome da atividade"
               />
-            </Grid>
+              </Grid>
 
-            <Grid item xs={12} md={3}>
+              <Grid item xs={12} md={3} sx={{ textAlign: { md: 'right' } }}>
               <Typography
                 component="label"
                 htmlFor="atividade-descricao"
@@ -79,8 +81,8 @@ export default function ParametrosAtividades() {
                   *
                 </Box>
               </Typography>
-            </Grid>
-            <Grid item xs={12} md={9}>
+              </Grid>
+              <Grid item xs={12} md={7}>
               <TextField
                 id="atividade-descricao"
                 fullWidth
@@ -90,9 +92,9 @@ export default function ParametrosAtividades() {
                 variant="standard"
                 placeholder="Descrição"
               />
-            </Grid>
+              </Grid>
 
-            <Grid item xs={12} md={3}>
+              <Grid item xs={12} md={3} sx={{ textAlign: { md: 'right' } }}>
               <Typography
                 component="label"
                 htmlFor="atividade-pontos"
@@ -103,8 +105,8 @@ export default function ParametrosAtividades() {
                   *
                 </Box>
               </Typography>
-            </Grid>
-            <Grid item xs={12} md={9}>
+              </Grid>
+              <Grid item xs={12} md={7}>
               <TextField
                 id="atividade-pontos"
                 fullWidth
@@ -114,11 +116,12 @@ export default function ParametrosAtividades() {
                 value={pontos}
                 onChange={(event) => setPontos(event.target.value)}
                 variant="standard"
+                placeholder="Somente Número"
                 sx={{ maxWidth: 140 }}
               />
-            </Grid>
+              </Grid>
 
-            <Grid item xs={12} md={3}>
+              <Grid item xs={12} md={3} sx={{ textAlign: { md: 'right' } }}>
               <Typography
                 component="label"
                 htmlFor="atividade-contabilizacao"
@@ -129,8 +132,8 @@ export default function ParametrosAtividades() {
                   *
                 </Box>
               </Typography>
-            </Grid>
-            <Grid item xs={12} md={9}>
+              </Grid>
+              <Grid item xs={12} md={7}>
               <TextField
                 id="atividade-contabilizacao"
                 select
@@ -152,12 +155,12 @@ export default function ParametrosAtividades() {
                   </MenuItem>
                 ))}
               </TextField>
-            </Grid>
+              </Grid>
 
-            <Grid item xs={12} md={3}>
-              <Typography sx={{ fontWeight: 600, color: 'text.secondary' }}>Ativo:</Typography>
-            </Grid>
-            <Grid item xs={12} md={9}>
+              <Grid item xs={12} md={3} sx={{ textAlign: { md: 'right' } }}>
+                <Typography sx={{ fontWeight: 600, color: 'text.secondary' }}>Ativo:</Typography>
+              </Grid>
+              <Grid item xs={12} md={7}>
               <FormControlLabel
                 control={
                   <Checkbox
@@ -167,14 +170,14 @@ export default function ParametrosAtividades() {
                 }
                 label=""
               />
-            </Grid>
+              </Grid>
 
-            <Grid item xs={12} md={3}>
-              <Typography sx={{ fontWeight: 600, color: 'text.secondary' }}>
-                Aceita multiplicador:
-              </Typography>
-            </Grid>
-            <Grid item xs={12} md={9}>
+              <Grid item xs={12} md={3} sx={{ textAlign: { md: 'right' } }}>
+                <Typography sx={{ fontWeight: 600, color: 'text.secondary' }}>
+                  Aceita multiplicador:
+                </Typography>
+              </Grid>
+              <Grid item xs={12} md={7}>
               <FormControlLabel
                 control={
                   <Checkbox
@@ -184,8 +187,9 @@ export default function ParametrosAtividades() {
                 }
                 label=""
               />
+              </Grid>
             </Grid>
-          </Grid>
+          </Box>
 
           <Box
             sx={{
@@ -203,14 +207,16 @@ export default function ParametrosAtividades() {
               </Button>
               <Button variant="outlined">Voltar</Button>
             </Box>
-            <Button variant="contained">Importar atividades</Button>
+            <Button variant="contained" color="info">
+              Importar atividades
+            </Button>
           </Box>
         </CardContent>
       </Card>
 
-      <Card sx={{ borderRadius: 3, boxShadow: 3 }}>
+      <Card sx={{ borderRadius: 2, boxShadow: 3 }}>
         <CardContent sx={{ p: { xs: 3, md: 4 } }}>
-          <Typography variant="h6" sx={{ fontWeight: 700, mb: 1, textTransform: 'uppercase' }}>
+          <Typography variant="h6" sx={{ fontWeight: 700, mb: 2, textTransform: 'uppercase' }}>
             Atividades cadastradas
           </Typography>
           <Divider sx={{ mb: 3 }} />
@@ -253,7 +259,9 @@ export default function ParametrosAtividades() {
                 <TableRow>
                   {columns.map((column) => (
                     <TableCell key={column} sx={{ fontWeight: 600 }}>
-                      {column}
+                      <TableSortLabel hideSortIcon={false} active={false}>
+                        {column}
+                      </TableSortLabel>
                     </TableCell>
                   ))}
                 </TableRow>
