@@ -57,7 +57,7 @@ export const menuItems: MenuItem[] = [
           {
             label: 'Unidade fiscal',
             icon: faCogs,
-            route: '/produtividade',
+            route: '/parametros/ufesp',
           },
         ],
       },
