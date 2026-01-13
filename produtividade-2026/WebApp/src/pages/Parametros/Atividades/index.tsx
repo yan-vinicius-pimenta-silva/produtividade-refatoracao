@@ -27,7 +27,7 @@ const columns = ['ID', 'Tipo', 'Tipo de Cálculo', 'Pontos', 'Ativo', 'Opções'
 export default function ParametrosAtividades() {
   const [nome, setNome] = useState('');
   const [descricao, setDescricao] = useState('');
-  const [pontos, setPontos] = useState('');
+  const [pontos, setPontos] = useState('1.0');
   const [tipoContabilizacao, setTipoContabilizacao] = useState('');
   const [ativo, setAtivo] = useState(false);
   const [aceitaMultiplicador, setAceitaMultiplicador] = useState(false);

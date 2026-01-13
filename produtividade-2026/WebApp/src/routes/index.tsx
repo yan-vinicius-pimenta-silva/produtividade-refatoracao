@@ -7,6 +7,7 @@ import {
   Login,
   NotFound,
   ParametrosAtividades,
+  ParametrosUnidadeFiscal,
   PasswordReset,
   Produtividade,
   Reports,
@@ -43,6 +44,10 @@ const privateRoutes = [
   {
     path: '/parametros/atividades',
     element: <ParametrosAtividades />,
+  },
+  {
+    path: '/parametros/ufesp',
+    element: <ParametrosUnidadeFiscal />,
   },
   {
     path: '/users',
