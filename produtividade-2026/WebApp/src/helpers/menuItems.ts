@@ -43,7 +43,7 @@ export const menuItems: MenuItem[] = [
       {
         label: 'Histórico',
         icon: faChartBar,
-        route: '/produtividade',
+        route: '/produtividade/historico',
       },
       {
         label: 'Parâmetros',
