@@ -36,6 +36,10 @@ const privateRoutes = [
     element: <Produtividade />,
   },
   {
+    path: '/produtividade/historico',
+    element: <Produtividade />,
+  },
+  {
     path: '/produtividade/lixeira',
     element: <ProdutividadeLixeira />,
   },

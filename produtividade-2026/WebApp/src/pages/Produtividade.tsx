@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Box,
   Button,
@@ -24,6 +24,7 @@ import {
   Refresh,
   TaskAlt,
 } from '@mui/icons-material';
+import { useLocation } from 'react-router-dom';
 
 type ActivityRow = {
   id: number;
@@ -47,7 +48,13 @@ const currencyFormatter = new Intl.NumberFormat('pt-BR', {
 });
 
 export default function Produtividade() {
-  const [homeTab, setHomeTab] = useState(0);
+  const location = useLocation();
+  const isHistorico = location.pathname === '/produtividade/historico';
+  const [homeTab, setHomeTab] = useState(() => (isHistorico ? 1 : 0));
+
+  useEffect(() => {
+    setHomeTab(isHistorico ? 1 : 0);
+  }, [isHistorico]);
 
   const pendingActivities = useMemo<ActivityRow[]>(
     () => [
