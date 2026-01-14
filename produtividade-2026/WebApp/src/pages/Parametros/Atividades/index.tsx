@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
+  Alert,
   Box,
   Button,
   Card,
@@ -8,7 +9,9 @@ import {
   Divider,
   FormControlLabel,
   Grid,
+  IconButton,
   MenuItem,
+  Snackbar,
   Table,
   TableBody,
   TableCell,
@@ -19,10 +22,34 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
+import { Delete, Edit } from '@mui/icons-material';
 
 const contabilizacaoOptions = ['Mensal', 'Por ocorrência', 'Por unidade'];
 const pageSizes = [10, 25, 50];
 const columns = ['ID', 'Tipo', 'Tipo de Cálculo', 'Pontos', 'Ativo', 'Opções'];
+const initialActivities = [
+  {
+    id: 101,
+    name: 'Vistoria de Regularização',
+    calculationType: 'Por ocorrência',
+    points: 2.5,
+    active: true,
+  },
+  {
+    id: 102,
+    name: 'Lavratura de Auto',
+    calculationType: 'Por ocorrência',
+    points: 8,
+    active: true,
+  },
+  {
+    id: 103,
+    name: 'Atendimento em Plantão',
+    calculationType: 'Mensal',
+    points: 1.2,
+    active: false,
+  },
+];
 
 export default function ParametrosAtividades() {
   const [nome, setNome] = useState('');
@@ -32,8 +59,151 @@ export default function ParametrosAtividades() {
   const [ativo, setAtivo] = useState(false);
   const [aceitaMultiplicador, setAceitaMultiplicador] = useState(false);
   const [pageSize, setPageSize] = useState(10);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [activities, setActivities] = useState(initialActivities);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: '',
+    severity: 'info' as 'success' | 'info' | 'warning' | 'error',
+  });
 
   const renderSelectValue = (value: string) => value || 'Escolha...';
+
+  const filteredActivities = useMemo(() => {
+    const normalizedSearch = searchTerm.trim().toLowerCase();
+    const filtered = normalizedSearch
+      ? activities.filter((activity) =>
+          [activity.name, activity.calculationType]
+            .join(' ')
+            .toLowerCase()
+            .includes(normalizedSearch)
+        )
+      : activities;
+
+    return filtered.slice(0, pageSize);
+  }, [activities, pageSize, searchTerm]);
+
+  const resetForm = () => {
+    setNome('');
+    setDescricao('');
+    setPontos('1.0');
+    setTipoContabilizacao('');
+    setAtivo(false);
+    setAceitaMultiplicador(false);
+    setEditingId(null);
+  };
+
+  const handleSubmit = () => {
+    if (!nome || !descricao || !tipoContabilizacao || !pontos) {
+      setSnackbar({
+        open: true,
+        message: 'Preencha todos os campos obrigatórios antes de cadastrar.',
+        severity: 'warning',
+      });
+      return;
+    }
+
+    const pointsValue = Number(pontos);
+    if (Number.isNaN(pointsValue) || pointsValue <= 0) {
+      setSnackbar({
+        open: true,
+        message: 'Informe um valor de pontos válido para a atividade.',
+        severity: 'warning',
+      });
+      return;
+    }
+
+    if (editingId) {
+      setActivities((current) =>
+        current.map((activity) =>
+          activity.id === editingId
+            ? {
+                ...activity,
+                name: nome,
+                calculationType: tipoContabilizacao,
+                points: pointsValue,
+                active: ativo,
+              }
+            : activity
+        )
+      );
+      setSnackbar({
+        open: true,
+        message: 'Atividade atualizada com sucesso.',
+        severity: 'success',
+      });
+    } else {
+      const newActivity = {
+        id: Math.max(0, ...activities.map((activity) => activity.id)) + 1,
+        name: nome,
+        calculationType: tipoContabilizacao,
+        points: pointsValue,
+        active: ativo,
+      };
+      setActivities((current) => [newActivity, ...current]);
+      setSnackbar({
+        open: true,
+        message: 'Atividade cadastrada com sucesso.',
+        severity: 'success',
+      });
+    }
+
+    resetForm();
+  };
+
+  const handleImport = () => {
+    const imported = [
+      {
+        id: Math.max(0, ...activities.map((activity) => activity.id)) + 1,
+        name: 'Monitoramento de Área Crítica',
+        calculationType: 'Mensal',
+        points: 3.2,
+        active: true,
+      },
+      {
+        id: Math.max(0, ...activities.map((activity) => activity.id)) + 2,
+        name: 'Operação Especial Noturna',
+        calculationType: 'Por unidade',
+        points: 5.5,
+        active: true,
+      },
+    ];
+
+    setActivities((current) => [...imported, ...current]);
+    setSnackbar({
+      open: true,
+      message: 'Atividades fictícias importadas com sucesso.',
+      severity: 'success',
+    });
+  };
+
+  const handleEdit = (id: number) => {
+    const activity = activities.find((item) => item.id === id);
+    if (!activity) {
+      return;
+    }
+    setNome(activity.name);
+    setDescricao(activity.name);
+    setPontos(String(activity.points));
+    setTipoContabilizacao(activity.calculationType);
+    setAtivo(activity.active);
+    setEditingId(id);
+    setSnackbar({
+      open: true,
+      message: 'Atividade carregada para edição.',
+      severity: 'info',
+    });
+  };
+
+  const handleDelete = (id: number) => {
+    setActivities((current) => current.filter((activity) => activity.id !== id));
+    setSnackbar({
+      open: true,
+      message: 'Atividade removida com sucesso.',
+      severity: 'success',
+    });
+  };
 
   return (
     <Box sx={{ bgcolor: '#f6f7fb', minHeight: '100vh', py: 4, px: { xs: 2, md: 4 } }}>
@@ -202,12 +372,14 @@ export default function ParametrosAtividades() {
             }}
           >
             <Box sx={{ display: 'flex', gap: 2 }}>
-              <Button variant="contained" color="warning">
-                Cadastrar
+              <Button variant="contained" color="warning" onClick={handleSubmit}>
+                {editingId ? 'Salvar' : 'Cadastrar'}
               </Button>
-              <Button variant="outlined">Voltar</Button>
+              <Button variant="outlined" onClick={resetForm}>
+                Voltar
+              </Button>
             </Box>
-            <Button variant="contained" color="info">
+            <Button variant="contained" color="info" onClick={handleImport}>
               Importar atividades
             </Button>
           </Box>
@@ -250,7 +422,13 @@ export default function ParametrosAtividades() {
               </Typography>
             </Box>
 
-            <TextField label="Pesquisar" variant="standard" sx={{ minWidth: 200 }} />
+            <TextField
+              label="Pesquisar"
+              variant="standard"
+              sx={{ minWidth: 200 }}
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
+            />
           </Box>
 
           <TableContainer sx={{ mt: 3, borderRadius: 2, border: '1px solid #e0e0e0' }}>
@@ -267,16 +445,70 @@ export default function ParametrosAtividades() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                <TableRow>
-                  <TableCell colSpan={columns.length}>
-                    Nenhum registro encontrado
-                  </TableCell>
-                </TableRow>
+                {filteredActivities.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={columns.length}>
+                      Nenhum registro encontrado
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredActivities.map((activity) => (
+                    <TableRow key={activity.id}>
+                      <TableCell>{activity.id}</TableCell>
+                      <TableCell>{activity.name}</TableCell>
+                      <TableCell>{activity.calculationType}</TableCell>
+                      <TableCell>{activity.points}</TableCell>
+                      <TableCell>{activity.active ? 'Sim' : 'Não'}</TableCell>
+                      <TableCell>
+                        <Box sx={{ display: 'flex', gap: 1 }}>
+                          <IconButton
+                            size="small"
+                            onClick={() => handleEdit(activity.id)}
+                            sx={{
+                              bgcolor: 'primary.main',
+                              color: 'common.white',
+                              '&:hover': { bgcolor: 'primary.dark' },
+                            }}
+                          >
+                            <Edit fontSize="small" />
+                          </IconButton>
+                          <IconButton
+                            size="small"
+                            onClick={() => handleDelete(activity.id)}
+                            sx={{
+                              bgcolor: 'error.main',
+                              color: 'common.white',
+                              '&:hover': { bgcolor: 'error.dark' },
+                            }}
+                          >
+                            <Delete fontSize="small" />
+                          </IconButton>
+                        </Box>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </TableContainer>
         </CardContent>
       </Card>
+
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={4000}
+        onClose={() => setSnackbar((current) => ({ ...current, open: false }))}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Alert
+          onClose={() => setSnackbar((current) => ({ ...current, open: false }))}
+          severity={snackbar.severity}
+          variant="filled"
+          sx={{ width: '100%' }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }
