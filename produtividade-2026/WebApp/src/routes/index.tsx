@@ -46,7 +46,7 @@ const privateRoutes = [
     element: <ParametrosAtividades />,
   },
   {
-    path: '/parametros/UnidadeFiscal',
+    path: '/parametros/ufesp',
     element: <ParametrosUnidadeFiscal />,
   },
   {
