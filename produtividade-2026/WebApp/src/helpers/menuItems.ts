@@ -64,7 +64,7 @@ export const menuItems: MenuItem[] = [
       {
         label: 'Lixeira',
         icon: faChartBar,
-        route: '/produtividade',
+        route: '/produtividade/lixeira',
       },
       {
         label: 'Sair',

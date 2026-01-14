@@ -7,6 +7,7 @@ export { default as PasswordReset } from './PasswordReset';
 export { default as ParametrosAtividades } from './Parametros/Atividades';
 export { default as ParametrosUnidadeFiscal } from './Parametros/UnidadeFiscal';
 export { default as Produtividade } from './Produtividade';
+export { default as ProdutividadeLixeira } from './Produtividade/Lixeira';
 export { default as Reports } from './Reports';
 export { default as Resources } from './Resources';
 export { default as UnauthorizedAccess } from './UnauthorizedAccess';

@@ -6,6 +6,7 @@ import {
   NotFound,
   PasswordReset,
   Produtividade,
+  ProdutividadeLixeira,
   Reports,
   Resources,
   UnauthorizedAccess,
@@ -32,6 +33,10 @@ const privateRoutes = [
   {
     path: '/produtividade',
     element: <Produtividade />,
+  },
+  {
+    path: '/produtividade/lixeira',
+    element: <ProdutividadeLixeira />,
   },
   {
     path: '/deducoes/cadastro',
