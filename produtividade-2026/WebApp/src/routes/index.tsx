@@ -1,3 +1,4 @@
+// router.tsx (ou onde você monta o router)
 import { createBrowserRouter } from 'react-router-dom';
 import ProtectedRoute from './ProtectedRoute';
 import {
@@ -14,10 +15,10 @@ import {
 import { CleanLayout, DefaultLayout } from '../layouts';
 import { UsersProvider } from '../contexts';
 import { PERMISSIONS } from '../permissions';
-import DeducaoCadastro from "../pages/Deducoes/Cadastro";
-import DeducaoConsulta from "../pages/Deducoes/Consulta";
-import ParametrosAtividades from "../pages/Parametros/Atividades";
-import  ParametrosUnidadeFiscal from "../pages/Parametros/UnidadeFiscal";
+import DeducaoCadastro from '../pages/Deducoes/Cadastro';
+import DeducaoConsulta from '../pages/Deducoes/Consulta';
+import ParametrosAtividades from '../pages/Parametros/Atividades';
+import ParametrosUnidadeFiscal from '../pages/Parametros/UnidadeFiscal';
 
 const publicRoutes = [
   { path: '/login', element: <Login /> },
@@ -25,30 +26,16 @@ const publicRoutes = [
 ];
 
 const privateRoutes = [
-  {
-    path: '/dashboard',
-    element: <DashBoard />,
-  },
-  {
-    path: '/produtividade',
-    element: <Produtividade />,
-  },
-  {
-    path: '/deducoes/cadastro',
-    element: <DeducaoCadastro />,
-  },
-  {
-    path: '/deducoes/consulta',
-    element: <DeducaoConsulta />,
-  },
-  {
-    path: '/parametros/atividades',
-    element: <ParametrosAtividades />,
-  },
-  {
-    path: '/parametros/UnidadeFiscal',
-    element: <ParametrosUnidadeFiscal />,
-  },
+  { path: '/dashboard', element: <DashBoard /> },
+  { path: '/produtividade', element: <Produtividade /> },
+  { path: '/deducoes/cadastro', element: <DeducaoCadastro /> },
+  { path: '/deducoes/consulta', element: <DeducaoConsulta /> },
+
+  // LIBERADOS (sem requiredPermission)
+  { path: '/parametros/atividades', element: <ParametrosAtividades /> },
+  { path: '/parametros/unidadefiscal', element: <ParametrosUnidadeFiscal /> },
+
+  // COM PERMISSÃO
   {
     path: '/users',
     element: (
@@ -74,12 +61,15 @@ const privateRoutes = [
   },
 ];
 
+
 const protectedRoutes = privateRoutes.map((route) => ({
   path: route.path,
-  element: (
+  element: route.requiredPermission ? (
     <ProtectedRoute requiredPermission={route.requiredPermission}>
       {route.element}
     </ProtectedRoute>
+  ) : (
+    route.element
   ),
 }));
 
@@ -93,7 +83,6 @@ const router = createBrowserRouter([
       { path: '*', element: <NotFound /> },
     ],
   },
-
   {
     element: <DefaultLayout />,
     children: protectedRoutes,
