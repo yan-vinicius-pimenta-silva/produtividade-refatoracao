@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Box,
   Button,
@@ -95,18 +95,59 @@ const mockRows = [
   },
 ];
 
+const STORAGE_KEY = 'deducoesMockRows';
+
+const parseStoredRows = () => {
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (!raw) {
+    return [];
+  }
+
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+};
+
 export default function DeducaoConsulta() {
   const [pageSize, setPageSize] = useState(10);
   const [searchTerm, setSearchTerm] = useState('');
   const [page, setPage] = useState(0);
+  const [storedRows, setStoredRows] = useState(() => parseStoredRows());
+
+  useEffect(() => {
+    setStoredRows(parseStoredRows());
+  }, []);
+
+  useEffect(() => {
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key === STORAGE_KEY) {
+        setStoredRows(parseStoredRows());
+      }
+    };
+
+    const handleFocus = () => {
+      setStoredRows(parseStoredRows());
+    };
+
+    window.addEventListener('storage', handleStorage);
+    window.addEventListener('focus', handleFocus);
+    return () => {
+      window.removeEventListener('storage', handleStorage);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, []);
 
   const filteredRows = useMemo(() => {
     const normalized = searchTerm.trim().toLowerCase();
+    const combinedRows = [...storedRows, ...mockRows];
     if (!normalized) {
-      return mockRows;
+      return combinedRows;
     }
 
-    return mockRows.filter((row) =>
+    return combinedRows.filter((row) =>
       [
         row.tipo,
         row.protocolo,
@@ -124,7 +165,7 @@ export default function DeducaoConsulta() {
         .toLowerCase()
         .includes(normalized)
     );
-  }, [searchTerm]);
+  }, [searchTerm, storedRows]);
 
   const pagedRows = useMemo(() => {
     const start = page * pageSize;
@@ -132,6 +173,10 @@ export default function DeducaoConsulta() {
   }, [filteredRows, page, pageSize]);
 
   const totalPages = Math.max(1, Math.ceil(filteredRows.length / pageSize));
+
+  useEffect(() => {
+    setPage((current) => Math.min(current, totalPages - 1));
+  }, [totalPages]);
 
   const handlePageSizeChange = (value: number) => {
     setPageSize(value);

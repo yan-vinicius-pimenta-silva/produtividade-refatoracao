@@ -25,6 +25,41 @@ const fiscals = [
   'Fernando Pagioro',
 ];
 
+const STORAGE_KEY = 'deducoesMockRows';
+
+type DeducaoRow = {
+  id: number;
+  tipo: string;
+  data: string;
+  protocolo: string;
+  documento: string;
+  rc: string;
+  cpfCnpj: string;
+  pontos: number;
+  quantidade: number;
+  valor: number;
+  fiscal: string;
+  documentoAnexo: string;
+  validacao: string;
+  observacao: string;
+  usuarioDeducao: string;
+  justificativa: string;
+};
+
+const parseStoredRows = () => {
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (!raw) {
+    return [];
+  }
+
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? (parsed as DeducaoRow[]) : [];
+  } catch {
+    return [];
+  }
+};
+
 export default function DeducaoCadastro() {
   const [deducao, setDeducao] = useState('');
   const [fiscal, setFiscal] = useState('');
@@ -47,6 +82,28 @@ export default function DeducaoCadastro() {
       });
       return;
     }
+
+    const newRow: DeducaoRow = {
+      id: Date.now(),
+      tipo: deducao,
+      data: new Date(vigencia).toLocaleDateString('pt-BR'),
+      protocolo: 'Novo cadastro',
+      documento: '--',
+      rc: '--',
+      cpfCnpj: '--',
+      pontos: 0,
+      quantidade: 1,
+      valor: 0,
+      fiscal,
+      documentoAnexo: 'sem-anexo.pdf',
+      validacao: 'Pendente',
+      observacao: 'Cadastro via formulário.',
+      usuarioDeducao: 'Usuário atual',
+      justificativa: justificativa || 'Sem justificativa informada.',
+    };
+
+    const storedRows = parseStoredRows();
+    localStorage.setItem(STORAGE_KEY, JSON.stringify([newRow, ...storedRows]));
 
     setSnackbar({
       open: true,
