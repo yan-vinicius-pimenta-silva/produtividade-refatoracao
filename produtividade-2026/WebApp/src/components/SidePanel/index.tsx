@@ -67,18 +67,22 @@ export default function SidePanel({ open, onNavigate }: SidePanelProps) {
           {filteredMenu.map((item) => {
             const renderMenuItem = (menuItem: MenuItem, depth = 0) => {
               const hasChildren = Boolean(menuItem.children?.length);
-              const isItemActive = (currentItem: MenuItem): boolean => {
-                if (currentItem.route) {
-                  return location.pathname === currentItem.route;
-                }
-                return (
-                  currentItem.children?.some((child) => isItemActive(child)) ??
-                  false
+              const isItemRouteActive = (currentItem: MenuItem): boolean =>
+                Boolean(
+                  currentItem.route &&
+                    location.pathname === currentItem.route
                 );
-              };
-              const active = isItemActive(menuItem);
+              const hasActiveDescendant = (
+                currentItem: MenuItem
+              ): boolean =>
+                currentItem.children?.some(
+                  (child) =>
+                    isItemRouteActive(child) || hasActiveDescendant(child)
+                ) ?? false;
+              const active = isItemRouteActive(menuItem);
+              const hasActiveChild = hasActiveDescendant(menuItem);
               const expanded =
-                expandedItems[menuItem.label] ?? (open && active);
+                expandedItems[menuItem.label] ?? (open && hasActiveChild);
 
               const handleClick = () => {
                 if (hasChildren) {
