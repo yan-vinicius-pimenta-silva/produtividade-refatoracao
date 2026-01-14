@@ -301,8 +301,10 @@ export default function Produtividade() {
         sx={{
           px: { xs: 2.5, md: 4 },
           py: 4,
-          background: 'linear-gradient(120deg, #0f766e 0%, #059669 100%)',
-          color: '#fff',
+          bgcolor: 'background.paper',
+          color: 'text.primary',
+          borderRadius: { xs: 0, md: 3 },
+          boxShadow: { xs: 'none', md: 1 },
         }}
       >
         <Typography variant="overline" sx={{ letterSpacing: 1 }}>
