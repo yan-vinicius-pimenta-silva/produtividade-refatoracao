@@ -297,30 +297,7 @@ export default function Produtividade() {
 
   return (
     <Box sx={{ bgcolor: '#f6f7fb', minHeight: '100vh', pb: 6 }}>
-      <Box
-        sx={{
-          px: { xs: 2.5, md: 4 },
-          py: 4,
-          bgcolor: 'background.paper',
-          color: 'text.primary',
-          borderRadius: { xs: 0, md: 3 },
-          boxShadow: { xs: 'none', md: 1 },
-        }}
-      >
-        <Typography variant="overline" sx={{ letterSpacing: 1 }}>
-          Fiscalização Urbana
-        </Typography>
-        <Typography variant="h4" sx={{ fontWeight: 700, mb: 1 }}>
-          Produtividade & Validação Financeira
-        </Typography>
-        <Typography variant="body1" sx={{ maxWidth: 760 }}>
-          Central operacional para validação de atividades, gestão de deduções e
-          administração legal da produtividade. Use dados fictícios para testar
-          fluxos antes de integrar com a base oficial.
-        </Typography>
-      </Box>
-
-      <Box sx={{ px: { xs: 2.5, md: 4 }, mt: -4 }}>
+      <Box sx={{ px: { xs: 2.5, md: 4 }, mt: 3 }}>
         <Paper sx={{ mt: 3, p: 3, borderRadius: 3, boxShadow: 3 }}>
           <Typography variant="h6" sx={{ fontWeight: 700 }}>
             Central de Apuração
