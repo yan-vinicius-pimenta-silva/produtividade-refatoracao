@@ -1,3 +1,4 @@
+// router.tsx (ou onde você monta o router)
 import { createBrowserRouter } from 'react-router-dom';
 import ProtectedRoute from './ProtectedRoute';
 import {
@@ -15,10 +16,10 @@ import {
 import { CleanLayout, DefaultLayout } from '../layouts';
 import { UsersProvider } from '../contexts';
 import { PERMISSIONS } from '../permissions';
-import DeducaoCadastro from "../pages/Deducoes/Cadastro";
-import DeducaoConsulta from "../pages/Deducoes/Consulta";
-import ParametrosAtividades from "../pages/Parametros/Atividades";
-import  ParametrosUnidadeFiscal from "../pages/Parametros/UnidadeFiscal";
+import DeducaoCadastro from '../pages/Deducoes/Cadastro';
+import DeducaoConsulta from '../pages/Deducoes/Consulta';
+import ParametrosAtividades from '../pages/Parametros/Atividades';
+import ParametrosUnidadeFiscal from '../pages/Parametros/UnidadeFiscal';
 
 const publicRoutes = [
   { path: '/login', element: <Login /> },
@@ -79,12 +80,15 @@ const privateRoutes = [
   },
 ];
 
+
 const protectedRoutes = privateRoutes.map((route) => ({
   path: route.path,
-  element: (
+  element: route.requiredPermission ? (
     <ProtectedRoute requiredPermission={route.requiredPermission}>
       {route.element}
     </ProtectedRoute>
+  ) : (
+    route.element
   ),
 }));
 
@@ -98,7 +102,6 @@ const router = createBrowserRouter([
       { path: '*', element: <NotFound /> },
     ],
   },
-
   {
     element: <DefaultLayout />,
     children: protectedRoutes,

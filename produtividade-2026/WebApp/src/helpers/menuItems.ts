@@ -57,7 +57,7 @@ export const menuItems: MenuItem[] = [
           {
             label: 'Unidade fiscal',
             icon: faCogs,
-            route: '/parametros/ufesp',
+            route: '/parametros/unidadefiscal',
           },
         ],
       },
@@ -65,11 +65,6 @@ export const menuItems: MenuItem[] = [
         label: 'Lixeira',
         icon: faChartBar,
         route: '/produtividade/lixeira',
-      },
-      {
-        label: 'Sair',
-        icon: faSignOutAlt,
-        route: '/logout',
       },
       {
         label: 'Usuários',
@@ -88,6 +83,11 @@ export const menuItems: MenuItem[] = [
         icon: faChartBar,
         route: '/reports',
         permission: PERMISSIONS.REPORTS,
+      },
+            {
+        label: 'Sair',
+        icon: faSignOutAlt,
+        route: '/logout',
       },
     ],
   },
