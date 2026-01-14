@@ -7,6 +7,7 @@ import {
   NotFound,
   PasswordReset,
   Produtividade,
+  ProdutividadeLixeira,
   Reports,
   Resources,
   UnauthorizedAccess,
@@ -26,16 +27,34 @@ const publicRoutes = [
 ];
 
 const privateRoutes = [
-  { path: '/dashboard', element: <DashBoard /> },
-  { path: '/produtividade', element: <Produtividade /> },
-  { path: '/deducoes/cadastro', element: <DeducaoCadastro /> },
-  { path: '/deducoes/consulta', element: <DeducaoConsulta /> },
-
-  // LIBERADOS (sem requiredPermission)
-  { path: '/parametros/atividades', element: <ParametrosAtividades /> },
-  { path: '/parametros/unidadefiscal', element: <ParametrosUnidadeFiscal /> },
-
-  // COM PERMISSÃO
+  {
+    path: '/dashboard',
+    element: <DashBoard />,
+  },
+  {
+    path: '/produtividade',
+    element: <Produtividade />,
+  },
+  {
+    path: '/produtividade/lixeira',
+    element: <ProdutividadeLixeira />,
+  },
+  {
+    path: '/deducoes/cadastro',
+    element: <DeducaoCadastro />,
+  },
+  {
+    path: '/deducoes/consulta',
+    element: <DeducaoConsulta />,
+  },
+  {
+    path: '/parametros/atividades',
+    element: <ParametrosAtividades />,
+  },
+  {
+    path: '/parametros/ufesp',
+    element: <ParametrosUnidadeFiscal />,
+  },
   {
     path: '/users',
     element: (
