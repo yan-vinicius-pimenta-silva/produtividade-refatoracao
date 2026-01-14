@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
+  Alert,
   Box,
   Button,
   Card,
@@ -10,6 +11,7 @@ import {
   Grid,
   IconButton,
   MenuItem,
+  Snackbar,
   Table,
   TableBody,
   TableCell,
@@ -24,7 +26,7 @@ import { Check, Close, Delete, Edit } from '@mui/icons-material';
 
 const pageSizes = [10, 25, 50];
 const columns = ['Ano', 'Descrição', 'Valor', 'Ativo', 'Opções'];
-const ufespRows = [
+const initialUfespRows = [
   {
     ano: '2024',
     descricao: 'UFESP 2024',
@@ -51,6 +53,96 @@ export default function ParametrosUnidadeFiscal() {
   const [valor, setValor] = useState('');
   const [ativo, setAtivo] = useState(false);
   const [pageSize, setPageSize] = useState(10);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [editingAno, setEditingAno] = useState<string | null>(null);
+  const [rows, setRows] = useState(initialUfespRows);
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: '',
+    severity: 'info' as 'success' | 'info' | 'warning' | 'error',
+  });
+
+  const filteredRows = useMemo(() => {
+    const normalizedSearch = searchTerm.trim().toLowerCase();
+    const filtered = normalizedSearch
+      ? rows.filter((row) =>
+          [row.ano, row.descricao, row.valor]
+            .join(' ')
+            .toLowerCase()
+            .includes(normalizedSearch)
+        )
+      : rows;
+
+    return filtered.slice(0, pageSize);
+  }, [pageSize, rows, searchTerm]);
+
+  const resetForm = () => {
+    setAno('');
+    setDescricao('UFESP YYYY');
+    setValor('');
+    setAtivo(false);
+    setEditingAno(null);
+  };
+
+  const handleSubmit = () => {
+    if (!ano || !descricao || !valor) {
+      setSnackbar({
+        open: true,
+        message: 'Preencha todos os campos obrigatórios antes de cadastrar.',
+        severity: 'warning',
+      });
+      return;
+    }
+
+    if (editingAno) {
+      setRows((current) =>
+        current.map((row) =>
+          row.ano === editingAno ? { ano, descricao, valor, ativo } : row
+        )
+      );
+      setSnackbar({
+        open: true,
+        message: 'UFESP atualizada com sucesso.',
+        severity: 'success',
+      });
+    } else {
+      setRows((current) => [{ ano, descricao, valor, ativo }, ...current]);
+      setSnackbar({
+        open: true,
+        message: 'UFESP cadastrada com sucesso.',
+        severity: 'success',
+      });
+    }
+
+    resetForm();
+  };
+
+  const handleEdit = (targetAno: string) => {
+    const row = rows.find((item) => item.ano === targetAno);
+    if (!row) {
+      return;
+    }
+
+    setAno(row.ano);
+    setDescricao(row.descricao);
+    setValor(row.valor);
+    setAtivo(row.ativo);
+    setEditingAno(targetAno);
+    setSnackbar({
+      open: true,
+      message: `UFESP ${targetAno} carregada para edição.`,
+      severity: 'info',
+    });
+  };
+
+  const handleDelete = (targetAno: string) => {
+    setRows((current) => current.filter((row) => row.ano !== targetAno));
+    setSnackbar({
+      open: true,
+      message: `UFESP ${targetAno} removida com sucesso.`,
+      severity: 'success',
+    });
+  };
 
   return (
     <Box sx={{ bgcolor: '#f6f7fb', minHeight: '100vh', py: 4, px: { xs: 2, md: 4 } }}>
@@ -157,10 +249,12 @@ export default function ParametrosUnidadeFiscal() {
               mt: 4,
             }}
           >
-            <Button variant="contained" color="warning">
-              Cadastrar
+            <Button variant="contained" color="warning" onClick={handleSubmit}>
+              {editingAno ? 'Salvar' : 'Cadastrar'}
             </Button>
-            <Button variant="outlined">Voltar</Button>
+            <Button variant="outlined" onClick={resetForm}>
+              Voltar
+            </Button>
           </Box>
         </CardContent>
       </Card>
@@ -201,7 +295,13 @@ export default function ParametrosUnidadeFiscal() {
               </Typography>
             </Box>
 
-            <TextField label="Pesquisar" variant="standard" sx={{ minWidth: 200 }} />
+            <TextField
+              label="Pesquisar"
+              variant="standard"
+              sx={{ minWidth: 200 }}
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
+            />
           </Box>
 
           <TableContainer sx={{ mt: 3, borderRadius: 2, border: '1px solid #e0e0e0' }}>
@@ -218,62 +318,88 @@ export default function ParametrosUnidadeFiscal() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {ufespRows.map((row) => (
-                  <TableRow key={row.ano}>
-                    <TableCell>{row.ano}</TableCell>
-                    <TableCell>{row.descricao}</TableCell>
-                    <TableCell>{row.valor}</TableCell>
-                    <TableCell>
-                      <Box
-                        sx={{
-                          width: 32,
-                          height: 32,
-                          borderRadius: 1,
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          bgcolor: row.ativo ? 'success.main' : 'grey.400',
-                          color: 'common.white',
-                        }}
-                      >
-                        {row.ativo ? <Check fontSize="small" /> : <Close fontSize="small" />}
-                      </Box>
-                    </TableCell>
-                    <TableCell>
-                      <Box sx={{ display: 'flex', gap: 1 }}>
-                        <IconButton
-                          size="small"
-                          sx={{
-                            bgcolor: 'primary.main',
-                            color: 'common.white',
-                            '&:hover': { bgcolor: 'primary.dark' },
-                          }}
-                        >
-                          <Edit fontSize="small" />
-                        </IconButton>
-                        <IconButton
-                          size="small"
-                          sx={{
-                            bgcolor: 'error.main',
-                            color: 'common.white',
-                            '&:hover': { bgcolor: 'error.dark' },
-                          }}
-                        >
-                          <Delete fontSize="small" />
-                        </IconButton>
-                      </Box>
+                {filteredRows.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={columns.length}>
+                      Nenhum registro encontrado
                     </TableCell>
                   </TableRow>
-                ))}
+                ) : (
+                  filteredRows.map((row) => (
+                    <TableRow key={row.ano}>
+                      <TableCell>{row.ano}</TableCell>
+                      <TableCell>{row.descricao}</TableCell>
+                      <TableCell>{row.valor}</TableCell>
+                      <TableCell>
+                        <Box
+                          sx={{
+                            width: 32,
+                            height: 32,
+                            borderRadius: 1,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            bgcolor: row.ativo ? 'success.main' : 'grey.400',
+                            color: 'common.white',
+                          }}
+                        >
+                          {row.ativo ? <Check fontSize="small" /> : <Close fontSize="small" />}
+                        </Box>
+                      </TableCell>
+                      <TableCell>
+                        <Box sx={{ display: 'flex', gap: 1 }}>
+                          <IconButton
+                            size="small"
+                            onClick={() => handleEdit(row.ano)}
+                            sx={{
+                              bgcolor: 'primary.main',
+                              color: 'common.white',
+                              '&:hover': { bgcolor: 'primary.dark' },
+                            }}
+                          >
+                            <Edit fontSize="small" />
+                          </IconButton>
+                          <IconButton
+                            size="small"
+                            onClick={() => handleDelete(row.ano)}
+                            sx={{
+                              bgcolor: 'error.main',
+                              color: 'common.white',
+                              '&:hover': { bgcolor: 'error.dark' },
+                            }}
+                          >
+                            <Delete fontSize="small" />
+                          </IconButton>
+                        </Box>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </TableContainer>
 
           <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
-            Mostrando de 1 até 3 de 3 registros
+            Mostrando {Math.min(filteredRows.length, pageSize)} de {rows.length} registros
           </Typography>
         </CardContent>
       </Card>
+
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={4000}
+        onClose={() => setSnackbar((current) => ({ ...current, open: false }))}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Alert
+          onClose={() => setSnackbar((current) => ({ ...current, open: false }))}
+          severity={snackbar.severity}
+          variant="filled"
+          sx={{ width: '100%' }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }

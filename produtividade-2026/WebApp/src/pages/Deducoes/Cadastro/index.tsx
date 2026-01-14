@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import {
+  Alert,
   Box,
   Button,
   Card,
@@ -7,6 +8,7 @@ import {
   Divider,
   Grid,
   MenuItem,
+  Snackbar,
   TextField,
   Typography,
 } from '@mui/material';
@@ -28,8 +30,46 @@ export default function DeducaoCadastro() {
   const [fiscal, setFiscal] = useState('');
   const [vigencia, setVigencia] = useState('');
   const [justificativa, setJustificativa] = useState('');
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: '',
+    severity: 'info' as 'success' | 'info' | 'warning' | 'error',
+  });
 
   const renderSelectValue = (value: string) => value || 'Escolha...';
+
+  const handleSubmit = () => {
+    if (!deducao || !fiscal || !vigencia) {
+      setSnackbar({
+        open: true,
+        message: 'Preencha todos os campos obrigatórios antes de cadastrar.',
+        severity: 'warning',
+      });
+      return;
+    }
+
+    setSnackbar({
+      open: true,
+      message: `Dedução "${deducao}" cadastrada para ${fiscal}.`,
+      severity: 'success',
+    });
+    setDeducao('');
+    setFiscal('');
+    setVigencia('');
+    setJustificativa('');
+  };
+
+  const handleReset = () => {
+    setDeducao('');
+    setFiscal('');
+    setVigencia('');
+    setJustificativa('');
+    setSnackbar({
+      open: true,
+      message: 'Formulário limpo com sucesso.',
+      severity: 'info',
+    });
+  };
 
   return (
     <Box sx={{ bgcolor: '#f6f7fb', minHeight: '100vh', py: 4, px: { xs: 2, md: 4 } }}>
@@ -164,13 +204,31 @@ export default function DeducaoCadastro() {
           </Grid>
 
           <Box sx={{ display: 'flex', gap: 2, mt: 4 }}>
-            <Button variant="contained" color="warning">
+            <Button variant="contained" color="warning" onClick={handleSubmit}>
               Cadastrar
             </Button>
-            <Button variant="outlined">Voltar</Button>
+            <Button variant="outlined" onClick={handleReset}>
+              Voltar
+            </Button>
           </Box>
         </CardContent>
       </Card>
+
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={4000}
+        onClose={() => setSnackbar((current) => ({ ...current, open: false }))}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Alert
+          onClose={() => setSnackbar((current) => ({ ...current, open: false }))}
+          severity={snackbar.severity}
+          variant="filled"
+          sx={{ width: '100%' }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }
