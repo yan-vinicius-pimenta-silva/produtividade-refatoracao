@@ -118,8 +118,30 @@ export default function SidePanel({ open, onNavigate }: SidePanelProps) {
                         sx={{
                           pl: open ? 2 + depth * 2 : 2,
                           backgroundColor: active
-                            ? (theme) => `${theme.palette.primary.main}`
+                            ? (theme) => theme.palette.primary.main
                             : 'transparent',
+                          color: active
+                            ? (theme) => theme.palette.primary.contrastText
+                            : (theme) => theme.palette.text.primary,
+                          '& .MuiListItemIcon-root': {
+                            color: active
+                              ? (theme) => theme.palette.primary.contrastText
+                              : (theme) => theme.palette.text.secondary,
+                            minWidth: open ? 40 : 32,
+                          },
+                          '&:hover': {
+                            backgroundColor: active
+                              ? (theme) => theme.palette.primary.dark
+                              : (theme) => theme.palette.action.hover,
+                            color: active
+                              ? (theme) => theme.palette.primary.contrastText
+                              : (theme) => theme.palette.text.primary,
+                            '& .MuiListItemIcon-root': {
+                              color: active
+                                ? (theme) => theme.palette.primary.contrastText
+                                : (theme) => theme.palette.text.primary,
+                            },
+                          },
                         }}
                       >
                         <ListItemIcon>
