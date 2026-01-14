@@ -3,6 +3,7 @@ import {
   faChartLine,
   faCogs,
   faClipboardList,
+  faFileLines,
   faSignOutAlt,
   faUsers,
 } from '@fortawesome/free-solid-svg-icons';
@@ -84,7 +85,13 @@ export const menuItems: MenuItem[] = [
         route: '/reports',
         permission: PERMISSIONS.REPORTS,
       },
-            {
+      {
+        label: 'Logs do sistema',
+        icon: faFileLines,
+        route: '/logs',
+        permission: PERMISSIONS.REPORTS,
+      },
+      {
         label: 'Sair',
         icon: faSignOutAlt,
         route: '/logout',
