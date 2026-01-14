@@ -1,312 +1,203 @@
-# Admin Panel BoilerPlate
+# Sistema de Análise e Documentação — Produtividade 2026
 
-> Modelo de painel administrativo full-stack com **backend em .NET 8 + PostgreSQL** e
-> **frontend em React + Vite + TypeScript**, incluindo **autenticação JWT**, **CRUD de usuários**,
-> **CRUD de recursos do sistema**, **controle de permissões RBAC**, **proteção de rotas** e
-> **auditoria de sistema** com integração completa entre frontend e backend.
+Este repositório reúne um **painel administrativo completo** (Admin Panel Boilerplate) e um **módulo de produtividade fiscal**, ambos consumidos por um frontend React e uma API .NET com PostgreSQL/SQLite.
 
 ---
 
-## Tecnologias Utilizadas
+## ✅ Visão Geral do Sistema
 
-- **Backend**
+### Objetivo
+Fornecer um painel administrativo com autenticação, RBAC e auditoria, além de um módulo dedicado à **gestão de produtividade fiscal**, incluindo lançamentos de atividades, pontuação e validação financeira.
 
-  - [.NET 8](https://learn.microsoft.com/en-us/dotnet/core/introduction)
-  - [Entity Framework Core](https://learn.microsoft.com/en-us/ef/core/)
-  - [PostgreSQL](https://www.postgresql.org/)
-  - [BCrypt](https://www.nuget.org/packages/BCrypt.Net-Next/)
-  - [JWT (JSON Web Token)](https://jwt.io/introduction)
-  - [Swagger](https://swagger.io/docs/)
+### Componentes Principais
 
-- **Frontend**
+**Backend (Api/)**
+- API .NET com **controllers REST**, camada de **services** e **repositório genérico** (`GenericRepository`) para CRUDs administrativos.【F:Api/Controllers/AuthController.cs†L1-L98】【F:Api/Controllers/UsersController.cs†L1-L93】【F:Api/Controllers/SystemResourcesController.cs†L1-L92】
+- **Dois DbContexts**:
+  - `ApiDbContext` para usuários, permissões, recursos e logs do Admin Panel.【F:Api/Data/ApiDbContext.cs†L1-L24】
+  - `ProdutividadeDbContext` para o módulo de produtividade (atividades, UFESP, lançamentos, pontos, etc.).【F:Api/Produtividade/Data/ProdutividadeDbContext.cs†L1-L31】
+- **Middlewares de segurança** para autenticação JWT, permissões e tratamento de exceções.【F:Api/Middlewares/RequireAuthorization.cs†L1-L59】【F:Api/Middlewares/ValidateUserPermissions.cs†L1-L112】【F:Api/Middlewares/ExceptionHandler.cs†L1-L68】
 
-  - [React 18](https://reactjs.org/)
-  - [Vite](https://vitejs.dev/)
-  - [TypeScript](https://www.typescriptlang.org/)
-  - [MaterialUI (MUI)](https://mui.com/)
-  - [Axios](https://axios-http.com/)
-  - [React Router](https://reactrouter.com/)
+**Frontend (WebApp/)**
+- SPA em React + Vite, com **rotas protegidas** e telas administrativas (login, usuários, recursos, relatórios).【F:WebApp/src/routes/index.tsx†L1-L89】
+- API client via **Axios** com interceptors JWT, e serviços específicos para o módulo de produtividade via `fetch`.【F:WebApp/src/api/index.ts†L1-L32】【F:WebApp/src/services/produtividadeServices.ts†L1-L280】
 
-- **DevOps**
-  - [Docker & Docker Compose](https://docs.docker.com/compose/)
-  - Containers para banco de dados, backend e frontend
+**Infraestrutura**
+- Docker Compose para banco, API e frontend.【F:docker-compose.yml†L1-L26】
 
 ---
 
-## Estrutura do Projeto
+## 🧠 Análise do Sistema Atual
 
+### Funcionamento (alto nível)
+1. **Frontend** autentica o usuário e armazena o JWT.
+2. **Requisições** são feitas para a API com `Authorization: Bearer <token>` via Axios ou fetch.
+3. **Middlewares** da API validam token, permissões e retornam erros padronizados.
+4. **Controllers/Services** processam regras de negócio e persistem via EF Core.
+
+Fluxo baseado em código:
+- JWT injetado no frontend via Axios interceptor.【F:WebApp/src/api/index.ts†L1-L32】
+- Validação de token e permissão por middleware no backend.【F:Api/Middlewares/RequireAuthorization.cs†L1-L59】【F:Api/Middlewares/ValidateUserPermissions.cs†L1-L112】
+- Pipeline e registro de services/controllers no `Program.cs`.【F:Api/Program.cs†L1-L131】
+
+### Arquitetura (resumida)
 ```
-admin-panel-boilerplate/
-│
-├── Api/ # Backend .NET
-│   ├── Controllers/
-│   ├── Data/
-│   ├── Dtos/
-│   ├── Helpers/
-│   ├── Middlewares/
-│   ├── Models/
-│   ├── Services/
-│   ├── Program.cs
-│   └── .env
-│
-├── WebApp/ # Frontend React + Vite
-│   ├── public/
-│   ├── src/
-│   │   ├── api/
-│   │   ├── components/
-│   │   ├── contexts/
-│   │   ├── helpers/
-│   │   ├── hooks/
-│   │   ├── interfaces/
-│   │   ├── pages/
-│   │   ├── permissions/
-│   │   ├── routes/
-│   │   ├── App.tsx
-│   │   └── main.tsx
-│   ├── tsconfig.json
-│   ├── package.json
-│   └── .env
-│
-└── docker-compose.yml
+WebApp (React)
+   │
+   │ REST + JWT
+   ▼
+API (ASP.NET Core)
+   ├─ Controllers (Admin + Produtividade)
+   ├─ Services (camada de negócio)
+   ├─ Middlewares (auth/permissões/exceções)
+   └─ EF Core (ApiDbContext + ProdutividadeDbContext)
+   ▼
+PostgreSQL / SQLite
 ```
 
----
+### Fluxo de Dados (admin vs. produtividade)
 
-## Pré-requisitos
-
-- [Docker](https://docs.docker.com/get-docker/)
-- [Docker Compose](https://docs.docker.com/compose/install/)
-- [Node.js](https://nodejs.org/en/) (para rodar frontend localmente, opcional se usar via container)
-- [.NET 8 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/8.0) (para rodar backend localmente, opcional se usar via container)
+- **Admin Panel**: usuários e permissões são manipulados via `/api/auth`, `/api/users`, `/api/resources`, `/api/reports`.【F:Api/Controllers/AuthController.cs†L1-L98】【F:Api/Controllers/UsersController.cs†L1-L93】【F:Api/Controllers/SystemResourcesController.cs†L1-L92】【F:Api/Controllers/SystemLogsController.cs†L1-L42】
+- **Produtividade**: endpoints dedicados (`/api/produtividade/...`) tratam login, cadastro de atividades, validação, pontos e UFESP.【F:Api/Produtividade/Controllers/AuthController.cs†L1-L84】【F:Api/Produtividade/Controllers/ActivitiesController.cs†L1-L164】【F:Api/Produtividade/Controllers/FiscalActivitiesController.cs†L1-L277】【F:Api/Produtividade/Controllers/PointsController.cs†L1-L58】
 
 ---
 
-## Quick start (Produtividade)
+## 📌 Status de Implementação
 
-### Opção 1: com Docker Compose (PostgreSQL)
+### Funcionalidades Implementadas
+
+**Admin Panel (API + UI):**
+- Autenticação JWT, token externo e reset de senha por email.【F:Api/Controllers/AuthController.cs†L1-L98】
+- CRUD de usuários com paginação e busca.【F:Api/Controllers/UsersController.cs†L1-L93】
+- CRUD de recursos do sistema e RBAC por permissões.【F:Api/Controllers/SystemResourcesController.cs†L1-L92】【F:Api/Middlewares/ValidateUserPermissions.cs†L1-L112】
+- Relatórios de auditoria via `/api/reports`.【F:Api/Controllers/SystemLogsController.cs†L1-L42】
+- Rotas administrativas disponíveis no frontend (`/users`, `/resources`, `/reports`).【F:WebApp/src/routes/index.tsx†L45-L89】
+
+**Produtividade (API):**
+- Login dedicado (`/api/produtividade/auth/login`).【F:Api/Produtividade/Controllers/AuthController.cs†L1-L84】
+- Gestão de atividades, tipos e lançamentos fiscais (CRUD + validação).【F:Api/Produtividade/Controllers/ActivitiesController.cs†L1-L164】【F:Api/Produtividade/Controllers/FiscalActivitiesController.cs†L1-L277】
+- Cálculo e retorno de pontuação consolidada por período.【F:Api/Produtividade/Controllers/PointsController.cs†L1-L58】
+
+### Funcionalidades Pendentes / Em Evolução
+
+**Frontend (Produtividade, Deduções, Parâmetros):**
+- Telas de produtividade e parâmetros ainda usam **dados mockados** e não consomem a API de produtividade (apesar de os serviços existirem).【F:WebApp/src/pages/Produtividade.tsx†L1-L287】【F:WebApp/src/pages/Deducoes/Cadastro/index.tsx†L1-L145】【F:WebApp/src/pages/Parametros/Atividades/index.tsx†L1-L245】【F:WebApp/src/pages/Parametros/UnidadeFiscal/index.tsx†L1-L238】【F:WebApp/src/services/produtividadeServices.ts†L1-L280】
+
+### Prioridades de Implementação
+
+1. **Conectar UI de Produtividade à API** (login, listagem, validação e pontos).
+2. **Implementar persistência real** nas telas de Deduções e Parâmetros.
+3. **Consolidar regras de negócio** (ex.: validação, uploads de anexos, auditoria para produtividade).
+
+---
+
+## 🛠 Ajustes Necessários
+
+### Correções
+- Garantir que os fluxos frontend de produtividade utilizem a autenticação do módulo (`/api/produtividade/auth/login`) e persistam dados em vez de mocks.【F:WebApp/src/services/produtividadeServices.ts†L1-L280】【F:WebApp/src/pages/Produtividade.tsx†L1-L287】
+
+### Melhorias
+- Criar DTOs/validações no frontend para lançamentos e deduções antes de enviar para API.
+- Padronizar mensagens e erros no frontend com base nas respostas da API.
+
+### Refatorações
+- Unificar o cliente HTTP (Axios) também para o módulo produtividade para ter interceptors e tratamento consistente.
+- Criar Context/Hooks específicos para produtividade, similar ao padrão dos módulos administrativos.
+
+---
+
+## 🗺 Roadmap
+
+### Curto Prazo (1–2 sprints)
+- Integrar telas de Produtividade com os serviços de API já existentes.
+- Implementar autenticação específica de produtividade no frontend.
+- Substituir dados mockados por dados reais.
+
+### Médio Prazo (3–5 sprints)
+- Criar endpoints e persistência para **Deduções** e **Parâmetros**.
+- Adicionar upload de anexos e histórico completo de validações.
+
+### Longo Prazo (6+ sprints)
+- Painel de analytics de produtividade (KPIs, gráficos e metas).
+- Integração com sistemas externos para dados fiscais oficiais.
+
+---
+
+## 🚀 Instalação e Configuração
+
+### Pré-requisitos
+- Docker + Docker Compose
+- Node.js (para rodar o frontend localmente)
+- .NET 8 SDK (para rodar a API localmente)
+
+### Passos com Docker (Recomendado)
 
 ```bash
-cd boilerplate-fullstack
-cp Api/.env.example Api/.env
+# Na raiz do projeto
+# 1) Crie o arquivo Api/.env (ver variáveis abaixo)
+# 2) Suba os containers
+
 docker compose up -d
 ```
 
-Em seguida:
-
+**Portas padrão**:
 - API: `http://localhost:5209`
-- Frontend: `http://localhost:5173`
-- Acesse a tela de produtividade em `http://localhost:5173/produtividade`
+- WebApp: `http://localhost:5173`
 
-### Opção 2: local (sem Docker) usando SQLite
+### Variáveis de Ambiente (API)
+A API usa variáveis de ambiente definidas em `Api/.env` para banco, CORS e serviços externos. Os principais valores lidos no startup são:
+- `API_PORT`
+- `DB_PROVIDER` (`postgres` ou `sqlite`)
+- `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`
+- `DB_SQLITE_PATH` (quando `DB_PROVIDER=sqlite`)
+- `RESEND_API_KEY`
+- `WEB_APP_URL`
 
-1. Configure o `.env` para SQLite:
+Essas variáveis são lidas no bootstrap da aplicação (`Program.cs`).【F:Api/Program.cs†L1-L131】
 
-```bash
-cd boilerplate-fullstack/Api
-cp .env.example .env
+### Variáveis de Ambiente (WebApp)
+Crie `WebApp/.env` com:
 ```
-
-No `.env`, ajuste:
-
+VITE_API_BASE_URL=http://localhost:5209/api
 ```
-DB_PROVIDER=sqlite
-DB_SQLITE_PATH=data/app.db
-```
-
-2. Inicie o backend:
-
-```bash
-cd boilerplate-fullstack/Api
-dotnet run
-```
-
-3. Inicie o frontend:
-
-```bash
-cd boilerplate-fullstack/WebApp
-npm install
-npm run dev
-```
-
-Abra `http://localhost:5173/produtividade`.
+【F:WebApp/.env.example†L1】
 
 ---
 
-## Rodando o Projeto via Docker Compose
+## 🧭 Guia de Uso (alto nível)
 
-### 1. Clonar o repositório
+- **Admin Panel:**
+  - Login em `/login`.
+  - Gestão de usuários em `/users`.
+  - Gestão de recursos/permissões em `/resources`.
+  - Auditoria em `/reports`.
 
-```bash
-git clone git@github.com:vanriwerson/admin-panel-boilerplate.git
-cd generic-login-dotnet-react
-```
+- **Produtividade:**
+  - Painel em `/produtividade`.
+  - Histórico em `/produtividade/historico`.
+  - Lixeira em `/produtividade/lixeira`.
+  - Parâmetros e deduções em `/parametros/...` e `/deducoes/...`.
 
-### 2. Criar arquivo `.env` do backend
-
-```bash
-cd Api
-cp .env.example .env
-```
-
-> Gere uma chave JWT segura:
-
-```bash
-echo "JWT_SECRET_KEY=$(openssl rand -base64 64)"
-```
-
-### 3. Subir todos os containers
-
-```bash
-docker compose up -d
-```
-
-- PostgreSQL: exposto em `localhost:5432`
-- Backend: exposto em `http://localhost:5209`
-- Frontend: exposto em `http://localhost:5173`
-
-### 4. Aplicar migrations no banco (caso use container para backend)
-
-```bash
-cd Api
-dotnet ef database update
-```
-
-> Isso criará as tabelas iniciais no PostgreSQL, definidas pela migration InitialCreate.
+Rotas definidas em `WebApp/src/routes/index.tsx`.【F:WebApp/src/routes/index.tsx†L1-L89】
 
 ---
 
-## Rodando Localmente sem Docker (opcional)
+## 🤝 Contribuição
 
-### Banco de dados
-
-Configure sua conexão postgre localmente ou suba somente o banco de dados via docker com:
-
-```bash
-docker compose up db
-```
-
-### Backend
-
-```bash
-cd Api
-dotnet run
-```
-
-### Frontend
-
-```bash
-cd WebApp
-npm install
-npm run dev
-```
+1. Crie uma branch de feature.
+2. Mantenha os padrões do backend (services + DTOs + repository).
+3. Siga o padrão do frontend (hooks + context + services).
 
 ---
 
-## Documentação detalhada
+## 📚 Referências Complementares
 
-> Você pode encontrar informações mais completas sobre a aplicação acessando a documentação específica:
-
-- [Backend](./Api/README.md)
-- [Frontend](./WebApp/README.md)
-
----
-
-## Observações
-
-- Todas as variáveis de ambiente são obrigatórias.
-- Logs de inicialização da api indicam se a conexão com o banco foi bem-sucedida.
-
----
-
-## Guia de Desenvolvimento e Evolução do Sistema
-
-Este projeto segue padrões bem definidos para facilitar a manutenção e adição de novos recursos. Abaixo, um guia passo-a-passo para adicionar novos endpoints à API e integrá-los na interface web.
-
-### Adicionando Novos Recursos à API (.NET)
-
-1. **Definir a Entidade (Model)**:
-
-   - Crie uma classe em `Api/Models/` representando a entidade do banco.
-   - Use anotações `[Table("nome_tabela")]` e `[Key]` para mapeamento EF Core.
-
-2. **Criar DTOs**:
-
-   - Em `Api/Dtos/`, crie DTOs para Create, Update e Read (ex.: `EntityCreateDto`, `EntityUpdateDto`, `EntityReadDto`).
-   - Use validações com `[Required]`, `[MaxLength]`, etc.
-
-3. **Configurar Entity Framework**:
-
-   - Em `Api/Data/Configurations/`, crie `EntityConfiguration.cs` para definir constraints, índices e relacionamentos.
-   - Registre no `ApiDbContext.cs`.
-
-4. **Criar Migration**:
-
-   ```bash
-   cd Api
-   dotnet ef migrations add NomeDaMigration
-   dotnet ef database update
-   ```
-
-5. **Implementar Serviço**:
-
-   - Em `Api/Services/EntityServices/`, crie classes como `CreateEntity.cs`, `GetAllEntities.cs`, etc.
-   - Use injeção do `IGenericRepository<Entity>` para operações CRUD.
-
-6. **Criar Controller**:
-
-   - Em `Api/Controllers/`, crie `EntityController.cs` com endpoints RESTful.
-   - Use `[HttpGet]`, `[HttpPost]`, etc., e retorne IActionResult padronizado.
-   - Aplique middlewares de autorização se necessário.
-
-7. **Atualizar Seeders** (opcional):
-   - Em `Api/Data/DbInitializer.cs`, adicione dados iniciais se necessário.
-
-### Integrando Novos Recursos na Interface Web (React)
-
-1. **Definir Interfaces TypeScript**:
-
-   - Em `WebApp/src/interfaces/`, crie tipos para a entidade e DTOs (ex.: `Entity.ts`, `EntityCreatePayload.ts`).
-
-2. **Criar Serviço de API**:
-
-   - Em `WebApp/src/services/`, crie funções para consumir os endpoints (ex.: `createEntity`, `getEntities`).
-   - Use a instância Axios configurada em `api/index.ts`.
-
-3. **Implementar Contexto (Context API)**:
-
-   - Em `WebApp/src/contexts/`, crie `EntityContext.tsx` seguindo o padrão de `UsersContext.tsx`.
-   - Inclua estados para lista, paginação, loading e error.
-   - Forneça funções CRUD via provider.
-
-4. **Criar Hook Personalizado**:
-
-   - Em `WebApp/src/hooks/`, crie `useEntity.ts` que usa `useContext(EntityContext)`.
-
-5. **Desenvolver Componentes**:
-
-   - Em `WebApp/src/components/`, crie componentes reutilizáveis (ex.: `EntityTable.tsx`, `EntityForm.tsx`, `EntityDialog.tsx`).
-   - Use hooks para estado e notificações (Snackbar).
-
-6. **Criar Página**:
-
-   - Em `WebApp/src/pages/`, crie `Entity/index.tsx` com layout e lógica de CRUD.
-   - Use `ConfirmDialog` para exclusões e `showNotification` para feedback.
-
-7. **Configurar Rotas**:
-
-   - Em `WebApp/src/routes/index.tsx`, adicione a nova rota com provider e proteção de permissão.
-   - Exemplo: `<EntityProvider><Entity /></EntityProvider>`
-
-8. **Adicionar Permissões**:
-   - Em `WebApp/src/permissions/`, defina novas regras RBAC se necessário.
-
-### Padrões Seguidos
-
-- **Backend**: Generic Repository, Dependency Injection, Middleware de Exceção, Logs Automáticos.
-- **Frontend**: Context API para estado global, Hooks para abstração, Componentes Reutilizáveis, Notificações via Snackbar.
-- **Segurança**: JWT, RBAC, Validações Server/Client-side.
-- **UI/UX**: Material-UI, Responsividade, Acessibilidade.
-
-Para mais detalhes, consulte os READMEs específicos da [API](./Api/README.md) e [WebApp](./WebApp/README.md).
-
----
+A documentação detalhada está disponível em `DOCS/`:
+- [Instalação](./DOCS/01-INSTALACAO.md)
+- [Arquitetura](./DOCS/02-ARQUITETURA.md)
+- [Backend](./DOCS/03-BACKEND.md)
+- [Frontend](./DOCS/04-FRONTEND.md)
+- [API Reference](./DOCS/05-API-REFERENCE.md)
+- [Permissões](./DOCS/06-PERMISSOES.md)
+- [Guia de Uso](./DOCS/07-GUIA-DE-USO.md)
+- [Desenvolvimento](./DOCS/08-DESENVOLVIMENTO.md)
