@@ -82,6 +82,15 @@ const privateRoutes = [
     ),
     requiredPermission: PERMISSIONS.REPORTS,
   },
+  {
+    path: '/logs',
+    element: (
+      <UsersProvider>
+        <Reports />
+      </UsersProvider>
+    ),
+    requiredPermission: PERMISSIONS.REPORTS,
+  },
 ];
 
 
