@@ -1,83 +1,100 @@
 import { createTheme } from '@mui/material/styles';
 
+/**
+ * 🎨 Paletas de cores inspiradas no projeto Catppuccin
+ * https://github.com/catppuccin/catppuccin
+ */
+
 export const defineTheme = (mode: 'light' | 'dark') =>
   createTheme({
     palette: {
       mode,
       ...(mode === 'light'
         ? {
-            // 🎨 Cores do modo claro
+            // 🌤️ Modo claro (inspirado em Catppuccin Latte)
             primary: {
-              main: '#198a0fff',
-              light: '#4caf50',
-              dark: '#0d6526',
-              contrastText: '#000',
+              main: '#8839ef',
+              light: '#9d5ef3',
+              dark: '#6c2bd9',
+              contrastText: '#ffffff',
             },
             secondary: {
-              main: '#8340ffff',
-              light: '#af71ffff',
-              dark: '#7700ffff',
-              contrastText: '#000',
+              main: '#179299',
+              light: '#2fb9c0',
+              dark: '#117377',
+              contrastText: '#ffffff',
             },
             success: {
-              main: '#4caf50', // Verde sucesso
-              light: '#81c784',
-              dark: '#388e3c',
+              main: '#40a02b',
+              light: '#6abf5b',
+              dark: '#2c7a1f',
             },
             error: {
-              main: '#f44336', // Vermelho erro
-              light: '#e57373',
-              dark: '#d32f2f',
+              main: '#d20f39',
+              light: '#e34b63',
+              dark: '#a80c2d',
             },
             warning: {
-              main: '#ff9800', // Laranja aviso
-              light: '#ffb74d',
-              dark: '#f57c00',
+              main: '#fe640b',
+              light: '#ff8a3d',
+              dark: '#c94f08',
             },
             info: {
-              main: '#2196f3', // Azul informação
-              light: '#64b5f6',
-              dark: '#1976d2',
+              main: '#1e66f5',
+              light: '#4c86f7',
+              dark: '#184ec0',
             },
-            background: { default: '#f5f5f5', paper: '#fff' },
-            text: { primary: '#000', secondary: '#333' },
+            background: {
+              default: '#eff1f5',
+              paper: '#ffffff',
+            },
+            text: {
+              primary: '#4c4f69',
+              secondary: '#5c5f77',
+            },
           }
         : {
-            // 🌙 Cores do modo escuro
+            // 🌙 Modo escuro (inspirado em Catppuccin Mocha)
             primary: {
-              main: '#198a0fff',
-              light: '#4caf50',
-              dark: '#0d6526',
-              contrastText: '#fff',
+              main: '#cba6f7',
+              light: '#dbc1fa',
+              dark: '#a883e6',
+              contrastText: '#1e1e2e',
             },
             secondary: {
-              main: '#6f00ffff',
-              light: '#9a4dffff',
-              dark: '#6b00e6ff',
-              contrastText: '#fff',
+              main: '#94e2d5',
+              light: '#b3f0e7',
+              dark: '#6fc8bb',
+              contrastText: '#1e1e2e',
             },
             success: {
-              main: '#66bb6a', // Verde sucesso escuro
-              light: '#98ee99',
-              dark: '#43a047',
+              main: '#a6e3a1',
+              light: '#c4f1c0',
+              dark: '#7acb75',
             },
             error: {
-              main: '#f44336', // Vermelho erro (igual ao claro)
-              light: '#e57373',
-              dark: '#d32f2f',
+              main: '#f38ba8',
+              light: '#f6a6bd',
+              dark: '#e06c8d',
             },
             warning: {
-              main: '#ffa726', // Laranja aviso escuro
-              light: '#ffb74d',
-              dark: '#f57c00',
+              main: '#fab387',
+              light: '#fccca8',
+              dark: '#e4946a',
             },
             info: {
-              main: '#42a5f5', // Azul informação escuro
-              light: '#80d6ff',
-              dark: '#1976d2',
+              main: '#89b4fa',
+              light: '#a6c8fc',
+              dark: '#6a96e8',
             },
-            background: { default: '#121212', paper: '#1e1e1e' },
-            text: { primary: '#fff', secondary: '#ccc' },
+            background: {
+              default: '#1e1e2e',
+              paper: '#313244',
+            },
+            text: {
+              primary: '#cdd6f4',
+              secondary: '#bac2de',
+            },
           }),
     },
     typography: {
