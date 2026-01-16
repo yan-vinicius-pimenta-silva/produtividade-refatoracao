@@ -6,6 +6,11 @@ import {
   Checkbox,
   Chip,
   Divider,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  IconButton,
   Paper,
   Snackbar,
   Tab,
@@ -24,9 +29,15 @@ import {
   Description,
   FilterList,
   Refresh,
+  Close,
   TaskAlt,
 } from '@mui/icons-material';
 import { useLocation } from 'react-router-dom';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { ptBR } from 'date-fns/locale';
+import { useAuth } from '../hooks';
 
 type ActivityRow = {
   id: number;
@@ -53,6 +64,11 @@ type SnackbarState = {
 const currencyFormatter = new Intl.NumberFormat('pt-BR', {
   style: 'currency',
   currency: 'BRL',
+});
+
+const monthYearFormatter = new Intl.DateTimeFormat('pt-BR', {
+  month: '2-digit',
+  year: 'numeric',
 });
 
 const initialPendingActivities: ActivityRow[] = [
@@ -154,6 +170,7 @@ const initialValidatedActivities: ActivityRow[] = [
 export default function Produtividade() {
   const location = useLocation();
   const isHistorico = location.pathname === '/produtividade/historico';
+  const { authUser } = useAuth();
   const [homeTab, setHomeTab] = useState(() => (isHistorico ? 1 : 0));
   const [pendingActivities, setPendingActivities] =
     useState<ActivityRow[]>(initialPendingActivities);
@@ -168,6 +185,11 @@ export default function Produtividade() {
     message: '',
     severity: 'info',
   });
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [reportMonth, setReportMonth] = useState<Date | null>(new Date());
+
+  const reportUserName =
+    authUser?.fullName || authUser?.username || 'Usuário atual';
 
   useEffect(() => {
     setHomeTab(isHistorico ? 1 : 0);
@@ -284,6 +306,123 @@ export default function Produtividade() {
     });
   };
 
+  const handleOpenDescriptiveReport = () => {
+    setIsReportModalOpen(true);
+  };
+
+  const formatMonthYear = (value: Date | null) => {
+    if (!value) return '--/----';
+    return monthYearFormatter.format(value);
+  };
+
+  const buildDescriptiveReportHtml = () => {
+    const rows = filteredActivities.length
+      ? filteredActivities
+          .map(
+            (row) => `
+            <tr>
+              <td>${row.type}</td>
+              <td>${row.protocol}</td>
+              <td>${row.date}</td>
+              <td>${row.document}</td>
+              <td style="text-align:right;">${currencyFormatter.format(
+                row.value
+              )}</td>
+            </tr>
+          `
+          )
+          .join('')
+      : `
+        <tr>
+          <td colspan="5" style="text-align:center;">Nenhuma atividade encontrada para o período.</td>
+        </tr>
+      `;
+
+    return `
+      <html>
+        <head>
+          <meta charset="utf-8" />
+          <title>Relatório Individual Descritivo</title>
+          <style>
+            body { font-family: Arial, Helvetica, sans-serif; padding: 32px; color: #111; }
+            .header { text-align: center; margin-bottom: 24px; }
+            .header h1 { font-size: 18px; margin: 8px 0; text-transform: uppercase; }
+            .header p { margin: 2px 0; font-size: 12px; }
+            .divider { margin: 16px 0; border-top: 2px solid #111; }
+            .meta { font-size: 14px; margin-bottom: 16px; }
+            .meta strong { display: inline-block; min-width: 100px; }
+            table { width: 100%; border-collapse: collapse; font-size: 12px; }
+            th, td { border: 1px solid #111; padding: 8px; }
+            th { background: #f3f3f3; text-transform: uppercase; }
+            .signature { margin-top: 40px; text-align: center; font-size: 13px; }
+            .signature-line { margin: 24px auto 8px; width: 60%; border-top: 1px solid #111; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <p>PREFEITURA DE ARARAS</p>
+            <p>SECRETARIA MUNICIPAL DE DESENVOLVIMENTO URBANO E OBRAS PÚBLICAS</p>
+            <p>COORDENADORIA DE FISCALIZAÇÃO URBANA</p>
+            <p>fiscalizacaourbana@araras.sp.gov.br | (19) 3547-3003</p>
+            <div class="divider"></div>
+            <h1>Relatório Individual Descritivo de Atividades</h1>
+          </div>
+
+          <div class="meta">
+            <p><strong>Fiscal:</strong> ${reportUserName}</p>
+            <p><strong>Vigência:</strong> ${formatMonthYear(reportMonth)}</p>
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th>Atividade</th>
+                <th>Nº do Processo/Protocolo</th>
+                <th>Data</th>
+                <th>Nº Lançamento/Doc</th>
+                <th>Valor</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rows}
+            </tbody>
+          </table>
+
+          <div class="signature">
+            <p>Araras, ____ de __________ de _______</p>
+            <div class="signature-line"></div>
+            <strong>${reportUserName}</strong>
+          </div>
+        </body>
+      </html>
+    `;
+  };
+
+  const handleGenerateDescriptivePdf = () => {
+    const reportWindow = window.open('', '_blank', 'noopener,noreferrer');
+    if (!reportWindow) {
+      setSnackbar({
+        open: true,
+        message: 'Não foi possível abrir a janela do relatório. Libere pop-ups.',
+        severity: 'warning',
+      });
+      return;
+    }
+
+    reportWindow.document.write(buildDescriptiveReportHtml());
+    reportWindow.document.close();
+    reportWindow.focus();
+    reportWindow.print();
+    reportWindow.addEventListener('afterprint', () => reportWindow.close());
+
+    setIsReportModalOpen(false);
+    setSnackbar({
+      open: true,
+      message: 'Relatório descritivo gerado com sucesso.',
+      severity: 'success',
+    });
+  };
+
   const handleToggleFilter = () => {
     setOnlyHighValue((current) => !current);
     setSnackbar({
@@ -296,190 +435,240 @@ export default function Produtividade() {
   };
 
   return (
-    <Box sx={{ bgcolor: '#f6f7fb', minHeight: '100vh', pb: 6 }}>
-      <Box sx={{ px: { xs: 2.5, md: 4 }, mt: 3 }}>
-        <Paper sx={{ mt: 3, p: 3, borderRadius: 3, boxShadow: 3 }}>
-          <Typography variant="h6" sx={{ fontWeight: 700 }}>
-            Central de Apuração
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-            Valide as atividades lançadas pelos fiscais antes de liberar o cálculo
-            financeiro. Atividades validadas ficam bloqueadas para edição.
-          </Typography>
+    <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBR}>
+      <Box sx={{ bgcolor: '#f6f7fb', minHeight: '100vh', pb: 6 }}>
+        <Box sx={{ px: { xs: 2.5, md: 4 }, mt: 3 }}>
+          <Paper sx={{ mt: 3, p: 3, borderRadius: 3, boxShadow: 3 }}>
+            <Typography variant="h6" sx={{ fontWeight: 700 }}>
+              Central de Apuração
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+              Valide as atividades lançadas pelos fiscais antes de liberar o cálculo
+              financeiro. Atividades validadas ficam bloqueadas para edição.
+            </Typography>
 
-          <Tabs
-            value={homeTab}
-            onChange={(_, value) => setHomeTab(value)}
-            textColor="primary"
-            indicatorColor="primary"
-            sx={{ mt: 3, '& .MuiTab-root': { textTransform: 'none' } }}
-          >
-            <Tab label="Atividades a validar" />
-            <Tab label="Validadas" />
-          </Tabs>
+            <Tabs
+              value={homeTab}
+              onChange={(_, value) => setHomeTab(value)}
+              textColor="primary"
+              indicatorColor="primary"
+              sx={{ mt: 3, '& .MuiTab-root': { textTransform: 'none' } }}
+            >
+              <Tab label="Atividades a validar" />
+              <Tab label="Validadas" />
+            </Tabs>
 
-          <Divider sx={{ my: 2 }} />
+            <Divider sx={{ my: 2 }} />
 
-          <Box
-            sx={{
-              display: 'flex',
-              flexWrap: 'wrap',
-              gap: 1.5,
-              justifyContent: 'space-between',
-            }}
-          >
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5 }}>
-              <Button
-                variant="contained"
-                color="warning"
-                onClick={() => handleGenerateReport('Descritivo')}
-              >
-                Relatório Descritivo
-              </Button>
-              <Button
-                variant="contained"
-                color="success"
-                onClick={() => handleGenerateReport('Produtividade')}
-              >
-                Relatório de Produtividade
-              </Button>
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={() => handleGenerateReport('Pontuacao')}
-              >
-                Relatório de Pontuação
-              </Button>
+            <Box
+              sx={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: 1.5,
+                justifyContent: 'space-between',
+              }}
+            >
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5 }}>
+                <Button
+                  variant="contained"
+                  color="warning"
+                  onClick={handleOpenDescriptiveReport}
+                >
+                  Relatório Descritivo
+                </Button>
+                <Button
+                  variant="contained"
+                  color="success"
+                  onClick={() => handleGenerateReport('Produtividade')}
+                >
+                  Relatório de Produtividade
+                </Button>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={() => handleGenerateReport('Pontuacao')}
+                >
+                  Relatório de Pontuação
+                </Button>
+              </Box>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5 }}>
+                <Button
+                  variant="contained"
+                  color="success"
+                  startIcon={<TaskAlt />}
+                  onClick={handleConfirm}
+                >
+                  Confirmar
+                </Button>
+                <Button
+                  variant="contained"
+                  color="success"
+                  startIcon={<Refresh />}
+                  onClick={handleRefresh}
+                >
+                  Atualizar
+                </Button>
+              </Box>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Button
+                  variant="text"
+                  startIcon={<FilterList />}
+                  onClick={handleToggleFilter}
+                >
+                  {onlyHighValue ? 'Remover filtro' : 'Filtrar alto valor'}
+                </Button>
+                <TextField
+                  label="Pesquisar"
+                  variant="standard"
+                  value={searchTerm}
+                  onChange={(event) => setSearchTerm(event.target.value)}
+                  sx={{ minWidth: 200 }}
+                />
+              </Box>
             </Box>
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5 }}>
-              <Button
-                variant="contained"
-                color="success"
-                startIcon={<TaskAlt />}
-                onClick={handleConfirm}
-              >
-                Confirmar
-              </Button>
-              <Button
-                variant="contained"
-                color="success"
-                startIcon={<Refresh />}
-                onClick={handleRefresh}
-              >
-                Atualizar
-              </Button>
-            </Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Button
-                variant="text"
-                startIcon={<FilterList />}
-                onClick={handleToggleFilter}
-              >
-                {onlyHighValue ? 'Remover filtro' : 'Filtrar alto valor'}
-              </Button>
-              <TextField
-                label="Pesquisar"
-                variant="standard"
-                value={searchTerm}
-                onChange={(event) => setSearchTerm(event.target.value)}
-                sx={{ minWidth: 200 }}
-              />
-            </Box>
 
-          </Box>
-
-          <TableContainer sx={{ mt: 3, borderRadius: 2, border: '1px solid #e0e0e0' }}>
-            <Table size="small">
-              <TableHead sx={{ bgcolor: '#f3f4f6' }}>
-                <TableRow>
-                  <TableCell sx={{ fontWeight: 600 }}>
-                    {homeTab === 0 ? 'Validar' : 'Status'}
-                  </TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Tipo</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Data</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Protocolo</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Documento</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>RC</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>CPF/CNPJ</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Pontos</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Quantidade</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Valor (R$)</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Fiscal</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Documento anexo</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Observações</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {filteredActivities.length === 0 ? (
+            <TableContainer
+              sx={{ mt: 3, borderRadius: 2, border: '1px solid #e0e0e0' }}
+            >
+              <Table size="small">
+                <TableHead sx={{ bgcolor: '#f3f4f6' }}>
                   <TableRow>
-                    <TableCell colSpan={13}>
-                      Nenhuma atividade encontrada com os filtros aplicados.
+                    <TableCell sx={{ fontWeight: 600 }}>
+                      {homeTab === 0 ? 'Validar' : 'Status'}
                     </TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Tipo</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Data</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Protocolo</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Documento</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>RC</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>CPF/CNPJ</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Pontos</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Quantidade</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Valor (R$)</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Fiscal</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Documento anexo</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Observações</TableCell>
                   </TableRow>
-                ) : (
-                  filteredActivities.map((row) => (
-                    <TableRow key={row.id}>
-                      <TableCell>
-                        {homeTab === 0 ? (
-                          <Checkbox
-                            checked={selectedIds.includes(row.id)}
-                            onChange={() => handleToggleSelection(row.id)}
-                            inputProps={{
-                              'aria-label': `Selecionar atividade ${row.id}`,
-                            }}
-                          />
-                        ) : (
+                </TableHead>
+                <TableBody>
+                  {filteredActivities.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={13}>
+                        Nenhuma atividade encontrada com os filtros aplicados.
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    filteredActivities.map((row) => (
+                      <TableRow key={row.id}>
+                        <TableCell>
+                          {homeTab === 0 ? (
+                            <Checkbox
+                              checked={selectedIds.includes(row.id)}
+                              onChange={() => handleToggleSelection(row.id)}
+                              inputProps={{
+                                'aria-label': `Selecionar atividade ${row.id}`,
+                              }}
+                            />
+                          ) : (
+                            <Chip
+                              icon={<CheckCircleOutline />}
+                              label="Validada"
+                              color="success"
+                              size="small"
+                            />
+                          )}
+                        </TableCell>
+                        <TableCell>{row.type}</TableCell>
+                        <TableCell>{row.date}</TableCell>
+                        <TableCell>{row.protocol}</TableCell>
+                        <TableCell>{row.document}</TableCell>
+                        <TableCell>{row.rc}</TableCell>
+                        <TableCell>{row.cpfCnpj}</TableCell>
+                        <TableCell>{row.points}</TableCell>
+                        <TableCell>{row.quantity}</TableCell>
+                        <TableCell>{currencyFormatter.format(row.value)}</TableCell>
+                        <TableCell>{row.fiscal}</TableCell>
+                        <TableCell>
                           <Chip
-                            icon={<CheckCircleOutline />}
-                            label="Validada"
-                            color="success"
+                            icon={<Description />}
+                            label={row.attachment}
+                            variant="outlined"
                             size="small"
                           />
-                        )}
-                      </TableCell>
-                      <TableCell>{row.type}</TableCell>
-                      <TableCell>{row.date}</TableCell>
-                      <TableCell>{row.protocol}</TableCell>
-                      <TableCell>{row.document}</TableCell>
-                      <TableCell>{row.rc}</TableCell>
-                      <TableCell>{row.cpfCnpj}</TableCell>
-                      <TableCell>{row.points}</TableCell>
-                      <TableCell>{row.quantity}</TableCell>
-                      <TableCell>{currencyFormatter.format(row.value)}</TableCell>
-                      <TableCell>{row.fiscal}</TableCell>
-                      <TableCell>
-                        <Chip
-                          icon={<Description />}
-                          label={row.attachment}
-                          variant="outlined"
-                          size="small"
-                        />
-                      </TableCell>
-                      <TableCell>{row.notes}</TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </Paper>
-      </Box>
+                        </TableCell>
+                        <TableCell>{row.notes}</TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </Paper>
+        </Box>
 
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={4000}
-        onClose={() => setSnackbar((current) => ({ ...current, open: false }))}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-      >
-        <Alert
-          onClose={() => setSnackbar((current) => ({ ...current, open: false }))}
-          severity={snackbar.severity}
-          variant="filled"
-          sx={{ width: '100%' }}
+        <Dialog
+          open={isReportModalOpen}
+          onClose={() => setIsReportModalOpen(false)}
+          maxWidth="sm"
+          fullWidth
         >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
-    </Box>
+          <DialogTitle
+            sx={{ display: 'flex', alignItems: 'center', pr: 6 }}
+          >
+            Relatório descritivo de produtividade
+            <IconButton
+              onClick={() => setIsReportModalOpen(false)}
+              sx={{ position: 'absolute', right: 8, top: 8 }}
+              aria-label="Fechar"
+            >
+              <Close />
+            </IconButton>
+          </DialogTitle>
+          <DialogContent dividers>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <TextField
+                label="Nome do fiscal"
+                value={reportUserName}
+                fullWidth
+                InputProps={{ readOnly: true }}
+              />
+              <DatePicker
+                label="Escolha o mês"
+                value={reportMonth}
+                onChange={(value) => setReportMonth(value)}
+                views={['month', 'year']}
+                slotProps={{
+                  textField: {
+                    fullWidth: true,
+                  },
+                }}
+              />
+            </Box>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setIsReportModalOpen(false)}>Cancelar</Button>
+            <Button variant="contained" onClick={handleGenerateDescriptivePdf}>
+              Gerar
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        <Snackbar
+          open={snackbar.open}
+          autoHideDuration={4000}
+          onClose={() => setSnackbar((current) => ({ ...current, open: false }))}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        >
+          <Alert
+            onClose={() => setSnackbar((current) => ({ ...current, open: false }))}
+            severity={snackbar.severity}
+            variant="filled"
+            sx={{ width: '100%' }}
+          >
+            {snackbar.message}
+          </Alert>
+        </Snackbar>
+      </Box>
+    </LocalizationProvider>
   );
 }
