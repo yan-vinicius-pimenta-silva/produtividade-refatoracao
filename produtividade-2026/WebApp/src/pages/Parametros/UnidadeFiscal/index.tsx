@@ -23,31 +23,12 @@ import {
   Typography,
 } from '@mui/material';
 import { Check, Close, Delete, Edit } from '@mui/icons-material';
+import { initialUfespRows } from '../../../helpers/parametrosData';
 
 const pageSizes = [10, 25, 50];
 const columns = ['Ano', 'Descrição', 'Valor', 'Ativo', 'Opções'];
 const MAX_PDF_SIZE_MB = 2;
 const MAX_PDF_SIZE_BYTES = MAX_PDF_SIZE_MB * 1024 * 1024;
-const initialUfespRows = [
-  {
-    ano: '2024',
-    descricao: 'UFESP 2024',
-    valor: '35,36',
-    ativo: false,
-  },
-  {
-    ano: '2025',
-    descricao: 'UFESP 2025',
-    valor: '37,02',
-    ativo: false,
-  },
-  {
-    ano: '2026',
-    descricao: 'UFESP 2026',
-    valor: '38,42',
-    ativo: true,
-  },
-];
 
 export default function ParametrosUnidadeFiscal() {
   const [ano, setAno] = useState('2026');
