@@ -88,7 +88,7 @@ export const defineTheme = (mode: 'light' | 'dark') =>
               dark: '#6a96e8',
             },
             background: {
-              default: '#1e1e2e',
+              default: '#313244',
               paper: '#313244',
             },
             text: {

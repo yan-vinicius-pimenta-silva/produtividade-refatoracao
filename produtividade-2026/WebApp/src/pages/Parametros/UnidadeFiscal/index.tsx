@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { ChangeEvent, useMemo, useState } from 'react';
 import {
   Alert,
   Box,
@@ -26,6 +26,8 @@ import { Check, Close, Delete, Edit } from '@mui/icons-material';
 
 const pageSizes = [10, 25, 50];
 const columns = ['Ano', 'Descrição', 'Valor', 'Ativo', 'Opções'];
+const MAX_PDF_SIZE_MB = 2;
+const MAX_PDF_SIZE_BYTES = MAX_PDF_SIZE_MB * 1024 * 1024;
 const initialUfespRows = [
   {
     ano: '2024',
@@ -56,6 +58,8 @@ export default function ParametrosUnidadeFiscal() {
   const [searchTerm, setSearchTerm] = useState('');
   const [editingAno, setEditingAno] = useState<string | null>(null);
   const [rows, setRows] = useState(initialUfespRows);
+  const [pdfFile, setPdfFile] = useState<File | null>(null);
+  const [pdfError, setPdfError] = useState('');
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: '',
@@ -82,6 +86,32 @@ export default function ParametrosUnidadeFiscal() {
     setValor('');
     setAtivo(false);
     setEditingAno(null);
+    setPdfFile(null);
+    setPdfError('');
+  };
+
+  const handlePdfChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) {
+      setPdfFile(null);
+      setPdfError('');
+      return;
+    }
+
+    if (file.type !== 'application/pdf') {
+      setPdfFile(null);
+      setPdfError('Envie um arquivo em PDF.');
+      return;
+    }
+
+    if (file.size > MAX_PDF_SIZE_BYTES) {
+      setPdfFile(null);
+      setPdfError(`O PDF deve ter no máximo ${MAX_PDF_SIZE_MB} MB.`);
+      return;
+    }
+
+    setPdfFile(file);
+    setPdfError('');
   };
 
   const handleSubmit = () => {
@@ -89,6 +119,15 @@ export default function ParametrosUnidadeFiscal() {
       setSnackbar({
         open: true,
         message: 'Preencha todos os campos obrigatórios antes de cadastrar.',
+        severity: 'warning',
+      });
+      return;
+    }
+
+    if (pdfError) {
+      setSnackbar({
+        open: true,
+        message: 'Corrija o PDF anexado antes de cadastrar.',
         severity: 'warning',
       });
       return;
@@ -235,6 +274,35 @@ export default function ParametrosUnidadeFiscal() {
                   }
                   label=""
                 />
+              </Grid>
+
+              <Grid item xs={12} md={3} sx={{ textAlign: { md: 'right' } }}>
+                <Typography sx={{ fontWeight: 600, color: 'text.secondary' }}>
+                  Documento PDF:
+                </Typography>
+              </Grid>
+              <Grid item xs={12} md={7}>
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 2 }}>
+                  <Button variant="outlined" component="label">
+                    Importar PDF
+                    <input
+                      hidden
+                      type="file"
+                      accept="application/pdf"
+                      onChange={handlePdfChange}
+                    />
+                  </Button>
+                  <Typography variant="body2" color="text.secondary">
+                    {pdfFile
+                      ? pdfFile.name
+                      : `Nenhum arquivo selecionado (máx. ${MAX_PDF_SIZE_MB} MB)`}
+                  </Typography>
+                </Box>
+                {pdfError && (
+                  <Typography variant="caption" color="error.main" sx={{ mt: 1, display: 'block' }}>
+                    {pdfError}
+                  </Typography>
+                )}
               </Grid>
             </Grid>
           </Box>
