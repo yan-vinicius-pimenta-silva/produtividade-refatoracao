@@ -9,7 +9,7 @@ import {
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks';
-import { getErrorMessage } from '../../helpers';
+import { getDefaultRouteForUser, getErrorMessage } from '../../helpers';
 import type { LoginPayload } from '../../interfaces';
 
 export default function LoginForm() {
@@ -55,7 +55,9 @@ export default function LoginForm() {
         localStorage.removeItem('identifier');
       }
 
-      navigate('/dashboard');
+      const storedUser = localStorage.getItem('authUser');
+      const parsedUser = storedUser ? JSON.parse(storedUser) : null;
+      navigate(getDefaultRouteForUser(parsedUser));
     } catch (err) {
       setError(getErrorMessage(err));
     } finally {

@@ -11,8 +11,9 @@ import type {
   PermissionsContextProps,
 } from '../interfaces';
 import { cleanStates, getPageTitleIcons, menuItems } from '../helpers';
+import { fiscalMenuItems } from '../helpers/menuItems';
 import { useSystemResources } from '../hooks';
-import { hasPermission, isRootUser } from '../permissions/Rules';
+import { hasPermission, isFiscalUser, isRootUser } from '../permissions/Rules';
 import type { ValidPermission } from '../permissions';
 
 const PermissionsContext = createContext<PermissionsContextProps | undefined>(
@@ -80,6 +81,9 @@ export function PermissionsProvider({ children }: { children: ReactNode }) {
   };
 
   const getMenuItemsForUser = (authUser: AuthUser | null): MenuItem[] => {
+    if (authUser && isFiscalUser(authUser)) {
+      return fiscalMenuItems;
+    }
     return filterMenuItems(menuItems, authUser);
   };
 

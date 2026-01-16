@@ -104,3 +104,32 @@ export const menuItems: MenuItem[] = [
     ],
   },
 ];
+
+export const fiscalMenuItems: MenuItem[] = [
+  {
+    label: 'Produtividade',
+    icon: faClipboardList,
+    children: [
+      {
+        label: 'Home',
+        icon: faChartLine,
+        route: '/produtividade/perfil',
+      },
+      {
+        label: 'Atividades Lei anterior',
+        icon: faChartBar,
+        route: '/produtividade/historico',
+      },
+      {
+        label: 'Lixeira',
+        icon: faChartBar,
+        route: '/produtividade/lixeira',
+      },
+      {
+        label: 'Sair',
+        icon: faSignOutAlt,
+        route: '/logout',
+      },
+    ],
+  },
+];
