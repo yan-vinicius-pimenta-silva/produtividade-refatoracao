@@ -13,6 +13,10 @@ export function isRootUser(authUser: EvalPermissions): boolean {
   return getUserPermissions(authUser).has(PERMISSIONS.ROOT);
 }
 
+export function isFiscalUser(authUser: EvalPermissions): boolean {
+  return authUser.permissions.length === 0;
+}
+
 export function hasPermission(
   authUser: EvalPermissions,
   permissionName: ValidPermission

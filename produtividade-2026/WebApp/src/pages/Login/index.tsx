@@ -3,7 +3,7 @@ import { Box, Typography, Paper, Link, CircularProgress } from '@mui/material';
 import { LoginForm, PasswordResetRequestModal } from '../../components';
 import { useAuth, useNotification } from '../../hooks';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { getErrorMessage } from '../../helpers';
+import { getDefaultRouteForUser, getErrorMessage } from '../../helpers';
 
 export default function Login() {
   const { showNotification } = useNotification();
@@ -30,12 +30,16 @@ export default function Login() {
 
           await handleExternalLogin({ externalToken: urlToken });
 
-          navigate('/dashboard', { replace: true });
+          const storedUser = localStorage.getItem('authUser');
+          const parsedUser = storedUser ? JSON.parse(storedUser) : null;
+          navigate(getDefaultRouteForUser(parsedUser), { replace: true });
           return;
         }
 
         if (token) {
-          navigate('/dashboard', { replace: true });
+          const storedUser = localStorage.getItem('authUser');
+          const parsedUser = storedUser ? JSON.parse(storedUser) : null;
+          navigate(getDefaultRouteForUser(parsedUser), { replace: true });
           return;
         }
       } catch (error) {

@@ -23,35 +23,13 @@ import {
   Typography,
 } from '@mui/material';
 import { Delete, Edit } from '@mui/icons-material';
+import { initialActivities } from '../../../helpers/parametrosData';
 
 const contabilizacaoOptions = ['Mensal', 'Por ocorrência', 'Por unidade'];
 const pageSizes = [10, 25, 50];
 const columns = ['ID', 'Tipo', 'Tipo de Cálculo', 'Pontos', 'Ativo', 'Opções'];
 const MAX_PDF_SIZE_MB = 2;
 const MAX_PDF_SIZE_BYTES = MAX_PDF_SIZE_MB * 1024 * 1024;
-const initialActivities = [
-  {
-    id: 101,
-    name: 'Vistoria de Regularização',
-    calculationType: 'Por ocorrência',
-    points: 2.5,
-    active: true,
-  },
-  {
-    id: 102,
-    name: 'Lavratura de Auto',
-    calculationType: 'Por ocorrência',
-    points: 8,
-    active: true,
-  },
-  {
-    id: 103,
-    name: 'Atendimento em Plantão',
-    calculationType: 'Mensal',
-    points: 1.2,
-    active: false,
-  },
-];
 
 export default function ParametrosAtividades() {
   const [nome, setNome] = useState('');
