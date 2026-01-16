@@ -186,10 +186,17 @@ export default function Produtividade() {
     severity: 'info',
   });
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [isProductivityReportOpen, setIsProductivityReportOpen] = useState(false);
+  const [isScoreReportOpen, setIsScoreReportOpen] = useState(false);
   const [reportMonth, setReportMonth] = useState<Date | null>(new Date());
+  const [reportUserInput, setReportUserInput] = useState('');
 
   const reportUserName =
     authUser?.fullName || authUser?.username || 'Usuário atual';
+
+  useEffect(() => {
+    setReportUserInput(reportUserName);
+  }, [reportUserName]);
 
   useEffect(() => {
     setHomeTab(isHistorico ? 1 : 0);
@@ -267,43 +274,200 @@ export default function Produtividade() {
     });
   };
 
-  const handleGenerateReport = (label: string) => {
-    const rows = activities.map((row) =>
-      [
-        row.id,
-        row.type,
-        row.date,
-        row.protocol,
-        row.document,
-        row.rc,
-        row.cpfCnpj,
-        row.points,
-        row.quantity,
-        row.value,
-        row.fiscal,
-        row.attachment,
-        row.notes,
-      ].join(';')
+  const allActivities = [...pendingActivities, ...validatedActivities];
+
+  const buildProductivityReportHtml = () => {
+    const targetName = reportUserInput.trim();
+    const reportRows = allActivities.filter(
+      (row) => row.fiscal.toLowerCase() === targetName.toLowerCase()
     );
-    const content = [
-      `Relatório ${label}`,
-      'ID;Tipo;Data;Protocolo;Documento;RC;CPF/CNPJ;Pontos;Quantidade;Valor;Fiscal;Anexo;Observações',
-      ...rows,
-    ].join('\n');
 
-    const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `relatorio-${label.replace(/\s+/g, '-').toLowerCase()}.csv`;
-    link.click();
-    URL.revokeObjectURL(url);
+    const rowsHtml = reportRows.length
+      ? reportRows
+          .map(
+            (row) => `
+              <tr>
+                <td>${row.type}</td>
+                <td style="text-align:right;">${row.points}</td>
+                <td style="text-align:right;">${row.quantity}</td>
+                <td style="text-align:right;">${currencyFormatter.format(
+                  row.value
+                )}</td>
+              </tr>
+            `
+          )
+          .join('')
+      : `
+        <tr>
+          <td colspan="4" style="text-align:center;">Nenhuma atividade encontrada para o fiscal informado.</td>
+        </tr>
+      `;
 
-    setSnackbar({
-      open: true,
-      message: `Relatório ${label.toLowerCase()} gerado com sucesso.`,
-      severity: 'success',
+    const totals = reportRows.reduce(
+      (acc, row) => ({
+        points: acc.points + row.points,
+        quantity: acc.quantity + row.quantity,
+        value: acc.value + row.value,
+      }),
+      { points: 0, quantity: 0, value: 0 }
+    );
+
+    return `
+      <html>
+        <head>
+          <meta charset="utf-8" />
+          <title>Relatório Mensal Individual de Produtividade</title>
+          <style>
+            body { font-family: Arial, Helvetica, sans-serif; padding: 32px; color: #111; }
+            .header { text-align: center; margin-bottom: 24px; }
+            .header h1 { font-size: 18px; margin: 8px 0; text-transform: uppercase; }
+            .header p { margin: 2px 0; font-size: 12px; }
+            .divider { margin: 16px 0; border-top: 2px solid #111; }
+            .meta { font-size: 14px; margin-bottom: 16px; }
+            .meta strong { display: inline-block; min-width: 120px; }
+            table { width: 100%; border-collapse: collapse; font-size: 12px; }
+            th, td { border: 1px solid #111; padding: 8px; }
+            th { background: #f3f3f3; text-transform: uppercase; }
+            tfoot td { font-weight: bold; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <p>PREFEITURA DE ARARAS</p>
+            <p>SECRETARIA MUNICIPAL DE DESENVOLVIMENTO URBANO E OBRAS PÚBLICAS</p>
+            <p>COORDENADORIA DE FISCALIZAÇÃO URBANA</p>
+            <p>fiscalizacaourbana@araras.sp.gov.br | (19) 3547-3003</p>
+            <div class="divider"></div>
+            <h1>Relatório Mensal Individual de Produtividade</h1>
+          </div>
+
+          <div class="meta">
+            <p><strong>Fiscal:</strong> ${targetName}</p>
+            <p><strong>Vigência:</strong> ${formatMonthYear(reportMonth)}</p>
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th>Atividade</th>
+                <th>Pontos</th>
+                <th>Quantidade</th>
+                <th>Valor</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rowsHtml}
+            </tbody>
+            <tfoot>
+              <tr>
+                <td>Total</td>
+                <td style="text-align:right;">${totals.points.toFixed(1)}</td>
+                <td style="text-align:right;">${totals.quantity.toFixed(1)}</td>
+                <td style="text-align:right;">${currencyFormatter.format(
+                  totals.value
+                )}</td>
+              </tr>
+            </tfoot>
+          </table>
+        </body>
+      </html>
+    `;
+  };
+
+  const buildScoreReportHtml = () => {
+    const grouped = allActivities.reduce<Record<string, typeof allActivities>>(
+      (acc, row) => {
+        const key = row.fiscal;
+        acc[key] = acc[key] ? [...acc[key], row] : [row];
+        return acc;
+      },
+      {}
+    );
+
+    const scoreRows = Object.entries(grouped).map(([fiscal, rows]) => {
+      const totals = rows.reduce(
+        (acc, row) => ({
+          points: acc.points + row.points,
+          quantity: acc.quantity + row.quantity,
+          value: acc.value + row.value,
+        }),
+        { points: 0, quantity: 0, value: 0 }
+      );
+      return { fiscal, ...totals };
     });
+
+    const maxPoints = Math.max(...scoreRows.map((row) => row.points), 0);
+
+    const rowsHtml = scoreRows.length
+      ? scoreRows
+          .map(
+            (row) => `
+              <tr>
+                <td>${row.fiscal}</td>
+                <td style="text-align:right;">${row.points.toFixed(1)}</td>
+                <td style="text-align:right;">${row.quantity.toFixed(1)}</td>
+                <td style="text-align:right;">${currencyFormatter.format(row.value)}</td>
+                <td style="text-align:right;">${
+                  maxPoints ? Math.round((row.points / maxPoints) * 100) : 0
+                }%</td>
+              </tr>
+            `
+          )
+          .join('')
+      : `
+        <tr>
+          <td colspan="5" style="text-align:center;">Nenhum usuário disponível.</td>
+        </tr>
+      `;
+
+    return `
+      <html>
+        <head>
+          <meta charset="utf-8" />
+          <title>Relatório de Pontuação</title>
+          <style>
+            body { font-family: Arial, Helvetica, sans-serif; padding: 32px; color: #111; }
+            .header { text-align: center; margin-bottom: 24px; }
+            .header h1 { font-size: 18px; margin: 8px 0; text-transform: uppercase; }
+            .header p { margin: 2px 0; font-size: 12px; }
+            .divider { margin: 16px 0; border-top: 2px solid #111; }
+            .meta { font-size: 14px; margin-bottom: 16px; }
+            table { width: 100%; border-collapse: collapse; font-size: 12px; }
+            th, td { border: 1px solid #111; padding: 8px; }
+            th { background: #f3f3f3; text-transform: uppercase; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <p>PREFEITURA DE ARARAS</p>
+            <p>SECRETARIA MUNICIPAL DE DESENVOLVIMENTO URBANO E OBRAS PÚBLICAS</p>
+            <p>COORDENADORIA DE FISCALIZAÇÃO URBANA</p>
+            <p>fiscalizacaourbana@araras.sp.gov.br | (19) 3547-3003</p>
+            <div class="divider"></div>
+            <h1>Relatório de Pontuação</h1>
+          </div>
+
+          <div class="meta">
+            <p><strong>Vigência:</strong> ${formatMonthYear(reportMonth)}</p>
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th>Fiscal</th>
+                <th>Pontos</th>
+                <th>Quantidade</th>
+                <th>Valor Total</th>
+                <th>Percentual</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rowsHtml}
+            </tbody>
+          </table>
+        </body>
+      </html>
+    `;
   };
 
   const handleOpenDescriptiveReport = () => {
@@ -423,6 +587,82 @@ export default function Produtividade() {
     });
   };
 
+  const handleGenerateProductivityPdf = () => {
+    if (!reportUserInput.trim()) {
+      setSnackbar({
+        open: true,
+        message: 'Informe o nome do fiscal para gerar o relatório.',
+        severity: 'warning',
+      });
+      return;
+    }
+    if (!reportMonth) {
+      setSnackbar({
+        open: true,
+        message: 'Selecione a data de vigência do relatório.',
+        severity: 'warning',
+      });
+      return;
+    }
+
+    const reportWindow = window.open('', '_blank', 'noopener,noreferrer');
+    if (!reportWindow) {
+      setSnackbar({
+        open: true,
+        message: 'Não foi possível abrir a janela do relatório. Libere pop-ups.',
+        severity: 'warning',
+      });
+      return;
+    }
+
+    reportWindow.document.write(buildProductivityReportHtml());
+    reportWindow.document.close();
+    reportWindow.focus();
+    reportWindow.print();
+    reportWindow.addEventListener('afterprint', () => reportWindow.close());
+
+    setIsProductivityReportOpen(false);
+    setSnackbar({
+      open: true,
+      message: 'Relatório de produtividade gerado com sucesso.',
+      severity: 'success',
+    });
+  };
+
+  const handleGenerateScorePdf = () => {
+    if (!reportMonth) {
+      setSnackbar({
+        open: true,
+        message: 'Selecione a data de vigência do relatório.',
+        severity: 'warning',
+      });
+      return;
+    }
+
+    const reportWindow = window.open('', '_blank', 'noopener,noreferrer');
+    if (!reportWindow) {
+      setSnackbar({
+        open: true,
+        message: 'Não foi possível abrir a janela do relatório. Libere pop-ups.',
+        severity: 'warning',
+      });
+      return;
+    }
+
+    reportWindow.document.write(buildScoreReportHtml());
+    reportWindow.document.close();
+    reportWindow.focus();
+    reportWindow.print();
+    reportWindow.addEventListener('afterprint', () => reportWindow.close());
+
+    setIsScoreReportOpen(false);
+    setSnackbar({
+      open: true,
+      message: 'Relatório de pontuação gerado com sucesso.',
+      severity: 'success',
+    });
+  };
+
   const handleToggleFilter = () => {
     setOnlyHighValue((current) => !current);
     setSnackbar({
@@ -479,14 +719,14 @@ export default function Produtividade() {
                 <Button
                   variant="contained"
                   color="success"
-                  onClick={() => handleGenerateReport('Produtividade')}
+                  onClick={() => setIsProductivityReportOpen(true)}
                 >
                   Relatório de Produtividade
                 </Button>
                 <Button
                   variant="contained"
                   color="primary"
-                  onClick={() => handleGenerateReport('Pontuacao')}
+                  onClick={() => setIsScoreReportOpen(true)}
                 >
                   Relatório de Pontuação
                 </Button>
@@ -648,6 +888,92 @@ export default function Produtividade() {
           <DialogActions>
             <Button onClick={() => setIsReportModalOpen(false)}>Cancelar</Button>
             <Button variant="contained" onClick={handleGenerateDescriptivePdf}>
+              Gerar
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        <Dialog
+          open={isProductivityReportOpen}
+          onClose={() => setIsProductivityReportOpen(false)}
+          maxWidth="sm"
+          fullWidth
+        >
+          <DialogTitle sx={{ display: 'flex', alignItems: 'center', pr: 6 }}>
+            Relatório de produtividade
+            <IconButton
+              onClick={() => setIsProductivityReportOpen(false)}
+              sx={{ position: 'absolute', right: 8, top: 8 }}
+              aria-label="Fechar"
+            >
+              <Close />
+            </IconButton>
+          </DialogTitle>
+          <DialogContent dividers>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <TextField
+                label="Nome do fiscal"
+                value={reportUserInput}
+                onChange={(event) => setReportUserInput(event.target.value)}
+                fullWidth
+              />
+              <DatePicker
+                label="Data vigência"
+                value={reportMonth}
+                onChange={(value) => setReportMonth(value)}
+                views={['month', 'year']}
+                slotProps={{
+                  textField: {
+                    fullWidth: true,
+                  },
+                }}
+              />
+            </Box>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setIsProductivityReportOpen(false)}>
+              Cancelar
+            </Button>
+            <Button variant="contained" onClick={handleGenerateProductivityPdf}>
+              Gerar
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        <Dialog
+          open={isScoreReportOpen}
+          onClose={() => setIsScoreReportOpen(false)}
+          maxWidth="sm"
+          fullWidth
+        >
+          <DialogTitle sx={{ display: 'flex', alignItems: 'center', pr: 6 }}>
+            Relatório de pontuação
+            <IconButton
+              onClick={() => setIsScoreReportOpen(false)}
+              sx={{ position: 'absolute', right: 8, top: 8 }}
+              aria-label="Fechar"
+            >
+              <Close />
+            </IconButton>
+          </DialogTitle>
+          <DialogContent dividers>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <DatePicker
+                label="Data vigência"
+                value={reportMonth}
+                onChange={(value) => setReportMonth(value)}
+                views={['month', 'year']}
+                slotProps={{
+                  textField: {
+                    fullWidth: true,
+                  },
+                }}
+              />
+            </Box>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setIsScoreReportOpen(false)}>Cancelar</Button>
+            <Button variant="contained" onClick={handleGenerateScorePdf}>
               Gerar
             </Button>
           </DialogActions>
