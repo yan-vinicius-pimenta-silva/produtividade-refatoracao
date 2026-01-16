@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { ChangeEvent, useState } from 'react';
 import {
   Alert,
   Box,
@@ -26,6 +26,8 @@ const fiscals = [
 ];
 
 const STORAGE_KEY = 'deducoesMockRows';
+const MAX_PDF_SIZE_MB = 2;
+const MAX_PDF_SIZE_BYTES = MAX_PDF_SIZE_MB * 1024 * 1024;
 
 type DeducaoRow = {
   id: number;
@@ -65,6 +67,8 @@ export default function DeducaoCadastro() {
   const [fiscal, setFiscal] = useState('');
   const [vigencia, setVigencia] = useState('');
   const [justificativa, setJustificativa] = useState('');
+  const [pdfFile, setPdfFile] = useState<File | null>(null);
+  const [pdfError, setPdfError] = useState('');
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: '',
@@ -73,11 +77,44 @@ export default function DeducaoCadastro() {
 
   const renderSelectValue = (value: string) => value || 'Escolha...';
 
+  const handlePdfChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) {
+      setPdfFile(null);
+      setPdfError('');
+      return;
+    }
+
+    if (file.type !== 'application/pdf') {
+      setPdfFile(null);
+      setPdfError('Envie um arquivo em PDF.');
+      return;
+    }
+
+    if (file.size > MAX_PDF_SIZE_BYTES) {
+      setPdfFile(null);
+      setPdfError(`O PDF deve ter no máximo ${MAX_PDF_SIZE_MB} MB.`);
+      return;
+    }
+
+    setPdfFile(file);
+    setPdfError('');
+  };
+
   const handleSubmit = () => {
     if (!deducao || !fiscal || !vigencia) {
       setSnackbar({
         open: true,
         message: 'Preencha todos os campos obrigatórios antes de cadastrar.',
+        severity: 'warning',
+      });
+      return;
+    }
+
+    if (pdfError) {
+      setSnackbar({
+        open: true,
+        message: 'Corrija o PDF anexado antes de cadastrar.',
         severity: 'warning',
       });
       return;
@@ -95,7 +132,7 @@ export default function DeducaoCadastro() {
       quantidade: 1,
       valor: 0,
       fiscal,
-      documentoAnexo: 'sem-anexo.pdf',
+      documentoAnexo: pdfFile?.name ?? 'sem-anexo.pdf',
       validacao: 'Pendente',
       observacao: 'Cadastro via formulário.',
       usuarioDeducao: 'Usuário atual',
@@ -114,6 +151,8 @@ export default function DeducaoCadastro() {
     setFiscal('');
     setVigencia('');
     setJustificativa('');
+    setPdfFile(null);
+    setPdfError('');
   };
 
   const handleReset = () => {
@@ -121,6 +160,8 @@ export default function DeducaoCadastro() {
     setFiscal('');
     setVigencia('');
     setJustificativa('');
+    setPdfFile(null);
+    setPdfError('');
     setSnackbar({
       open: true,
       message: 'Formulário limpo com sucesso.',
@@ -257,6 +298,33 @@ export default function DeducaoCadastro() {
                 minRows={2}
                 variant="standard"
               />
+            </Grid>
+
+            <Grid item xs={12} md={3}>
+              <Typography sx={{ fontWeight: 600, color: 'text.secondary' }}>
+                Documento PDF:
+              </Typography>
+            </Grid>
+            <Grid item xs={12} md={9}>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 2 }}>
+                <Button variant="outlined" component="label">
+                  Importar PDF
+                  <input
+                    hidden
+                    type="file"
+                    accept="application/pdf"
+                    onChange={handlePdfChange}
+                  />
+                </Button>
+                <Typography variant="body2" color="text.secondary">
+                  {pdfFile ? pdfFile.name : `Nenhum arquivo selecionado (máx. ${MAX_PDF_SIZE_MB} MB)`}
+                </Typography>
+              </Box>
+              {pdfError && (
+                <Typography variant="caption" color="error.main" sx={{ mt: 1, display: 'block' }}>
+                  {pdfError}
+                </Typography>
+              )}
             </Grid>
           </Grid>
 
