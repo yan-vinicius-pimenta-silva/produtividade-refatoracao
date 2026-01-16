@@ -23,6 +23,11 @@ export const menuItems: MenuItem[] = [
       {
         label: 'Home',
         icon: faChartLine,
+        route: '/produtividade/perfil',
+      },
+      {
+        label: 'Central de apuração',
+        icon: faClipboardList,
         route: '/produtividade',
       },
       {
